@@ -1,0 +1,929 @@
+{
+  "components": {
+    "schemas": {
+      "Currency": {
+        "description": "Supported currencies. Amounts use the currency's minor unit; no conversion is performed.",
+        "enum": [
+          "GBP",
+          "USD",
+          "EUR",
+          "JPY"
+        ],
+        "type": "string"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "EventOutcome": {
+        "enum": [
+          "Applied",
+          "Stale",
+          "Unchanged"
+        ],
+        "type": "string"
+      },
+      "EventReceipt": {
+        "properties": {
+          "duplicate_event": {
+            "description": "True only for an exact retry of a previously committed event ID.",
+            "type": "boolean"
+          },
+          "event_id": {
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/EventOutcome",
+            "description": "Original outcome for a retry; payment contains the current state."
+          },
+          "payment": {
+            "$ref": "#/components/schemas/LivePayment"
+          }
+        },
+        "required": [
+          "event_id",
+          "duplicate_event",
+          "outcome",
+          "payment"
+        ],
+        "type": "object"
+      },
+      "EventSource": {
+        "enum": [
+          "Internal",
+          "Provider"
+        ],
+        "type": "string"
+      },
+      "LivePayment": {
+        "properties": {
+          "evaluated_at_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "first_seen_at_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "internal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VersionedPayment"
+              }
+            ]
+          },
+          "payment_id": {
+            "type": "string"
+          },
+          "provider": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VersionedPayment"
+              }
+            ]
+          },
+          "recommended_action": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NextAction"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/LiveStatus"
+          },
+          "waiting_until_ms": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "payment_id",
+          "status",
+          "first_seen_at_ms",
+          "waiting_until_ms",
+          "evaluated_at_ms"
+        ],
+        "type": "object"
+      },
+      "LiveStatus": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/WaitingStatus"
+          },
+          {
+            "$ref": "#/components/schemas/ReconciliationResult"
+          }
+        ]
+      },
+      "NextAction": {
+        "enum": [
+          "ReviewPaymentStatus",
+          "InvestigateCurrencyAndValues",
+          "InvestigateAmount",
+          "InvestigateAmountAndStatus",
+          "RecheckSource",
+          "InvestigateIdentity"
+        ],
+        "type": "string"
+      },
+      "Payment": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          }
+        },
+        "required": [
+          "id",
+          "currency",
+          "amount_minor",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PaymentEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "description": "Unique across both sources for the lifetime of this database.",
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/Payment"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EventSource"
+          },
+          "version": {
+            "description": "Monotonically increasing per (payment ID, source); 1 through i64::MAX.",
+            "format": "int64",
+            "maximum": 9223372036854775807,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "source",
+          "version",
+          "payment"
+        ],
+        "type": "object"
+      },
+      "PaymentStatus": {
+        "enum": [
+          "Pending",
+          "Completed",
+          "Failed"
+        ],
+        "type": "string"
+      },
+      "ReconcileRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "internal_payments": {
+            "items": {
+              "$ref": "#/components/schemas/Payment"
+            },
+            "type": "array"
+          },
+          "provider_payments": {
+            "items": {
+              "$ref": "#/components/schemas/Payment"
+            },
+            "type": "array"
+          },
+          "source_labels": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SourceLabels",
+                "description": "Optional source labels (not credentials), at most 128 characters each."
+              }
+            ]
+          }
+        },
+        "required": [
+          "internal_payments",
+          "provider_payments"
+        ],
+        "type": "object"
+      },
+      "ReconciliationReport": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ReportEntry"
+            },
+            "type": "array"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ReportMetadata"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ReportSummary"
+          }
+        },
+        "required": [
+          "metadata",
+          "summary",
+          "entries"
+        ],
+        "type": "object"
+      },
+      "ReconciliationResult": {
+        "enum": [
+          "Matched",
+          "DifferentPaymentIds",
+          "AmountMismatch",
+          "StatusMismatch",
+          "AmountAndStatusMismatch",
+          "CurrencyMismatch",
+          "AmountAndCurrencyMismatch",
+          "StatusAndCurrencyMismatch",
+          "AmountStatusAndCurrencyMismatch",
+          "MissingFromProvider",
+          "MissingFromInternal"
+        ],
+        "type": "string"
+      },
+      "ReportEntry": {
+        "properties": {
+          "internal_amount_minor": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "internal_currency": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ]
+          },
+          "internal_status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentStatus"
+              }
+            ]
+          },
+          "payment_id": {
+            "type": "string"
+          },
+          "provider_amount_minor": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "provider_currency": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ]
+          },
+          "provider_status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentStatus"
+              }
+            ]
+          },
+          "recommended_action": {
+            "$ref": "#/components/schemas/NextAction"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ReconciliationResult"
+          }
+        },
+        "required": [
+          "payment_id",
+          "result",
+          "recommended_action"
+        ],
+        "type": "object"
+      },
+      "ReportMetadata": {
+        "properties": {
+          "engine_version": {
+            "type": "string"
+          },
+          "fingerprint_format": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "internal_source": {
+            "$ref": "#/components/schemas/SourceReference"
+          },
+          "provider_source": {
+            "$ref": "#/components/schemas/SourceReference"
+          },
+          "report_id": {
+            "type": "string"
+          },
+          "rules_version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "generated_at",
+          "engine_version",
+          "rules_version",
+          "fingerprint_format",
+          "internal_source",
+          "provider_source"
+        ],
+        "type": "object"
+      },
+      "ReportSummary": {
+        "properties": {
+          "discrepancies": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "matched": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "total_entries": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_entries",
+          "matched",
+          "discrepancies"
+        ],
+        "type": "object"
+      },
+      "SourceLabels": {
+        "additionalProperties": false,
+        "properties": {
+          "internal": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          }
+        },
+        "required": [
+          "internal",
+          "provider"
+        ],
+        "type": "object"
+      },
+      "SourceReference": {
+        "properties": {
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "record_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sha256": {
+            "description": "SHA-256 over normalized compact JSON in input order, not raw uploaded bytes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_count",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "VersionedPayment": {
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/Payment"
+          },
+          "received_at_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "version": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "event_id",
+          "received_at_ms",
+          "payment"
+        ],
+        "type": "object"
+      },
+      "WaitingStatus": {
+        "enum": [
+          "AwaitingInternal",
+          "AwaitingProvider"
+        ],
+        "type": "string"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Authenticated snapshot reconciliation. Local loopback development may omit authentication. Configured limits override documented defaults.",
+    "license": {
+      "identifier": "MIT",
+      "name": "MIT"
+    },
+    "title": "Payment reconciliation API",
+    "version": "0.2.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ok"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Service is alive"
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Generated OpenAPI contract"
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "post": {
+        "operationId": "ingest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentEvent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventReceipt"
+                }
+              }
+            },
+            "description": "Committed event or exact retry; includes current payment state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed JSON"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid token"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Event identity or source-version conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Event body exceeds 16 KiB or configured body limit"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unsupported media type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid event data"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Rate limit; Retry-After supplied"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Storage failure"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Capacity or storage busy; retry identical event"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Deadline expired; commit may have completed, retry identical event"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "event_routes"
+        ]
+      }
+    },
+    "/v1/payments/{payment_id}": {
+      "get": {
+        "operationId": "status",
+        "parameters": [
+          {
+            "description": "Exact payment ID, URL-encoded; at most 256 UTF-8 bytes",
+            "in": "path",
+            "name": "payment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivePayment"
+                }
+              }
+            },
+            "description": "Current state, with waiting deadline evaluated now; Cache-Control: no-store"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid token"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Payment not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid payment ID"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Rate limit"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Storage failure"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Storage or worker capacity busy"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Deadline expired"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "event_routes"
+        ]
+      }
+    },
+    "/v1/reconcile": {
+      "post": {
+        "operationId": "reconcile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationReport"
+                }
+              }
+            },
+            "description": "Report; mismatches are successful results"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Malformed JSON"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid token"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Body or payment count limit"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unsupported content type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid data or duplicate IDs"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Global rate limit"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Worker failure"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Capacity exhausted"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Deadline exceeded"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": []
+      }
+    }
+  }
+}

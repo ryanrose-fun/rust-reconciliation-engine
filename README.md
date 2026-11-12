@@ -1,0 +1,133 @@
+# Payment reconciliation engine
+
+A Rust library, command-line tool, and HTTP service for comparing payment snapshots and continuously reconciling versioned source events. It reports all amount, status, and currency differences for each payment, with source evidence and investigation recommendations. It does not execute payments.
+
+Version 0.2.0 is a locally tested pilot candidate, licensed under MIT. The Cargo package remains `hello_cargo`. This public repository uses synthetic payment data; it is not a payment processor or a claim of production deployment.
+
+[![CI](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/workflows/ci.yml)
+
+## Engineering highlights
+
+- Exact minor-unit amounts and explicit currencies, with duplicate-ID validation.
+- Library, CLI and HTTP interfaces sharing reconciliation behaviour.
+- Versioned events persisted transactionally in SQLite, with idempotent retries and stale-update protection.
+- Bounded admission, observable failures and request-level evidence.
+- Unit, HTTP, schema and persistence tests; Windows/Linux CI and a container build.
+
+```mermaid
+flowchart LR
+    Sources[Internal and provider snapshots] --> V[Validate IDs, amounts, currencies]
+    V --> R[Reconciliation engine]
+    R --> Report[Discrepancies and source evidence]
+    Events[Versioned source events] --> Admission[Bounded API admission]
+    Admission --> Store[(SQLite transaction)]
+    Store --> State[Current reconciliation state]
+```
+
+Start with [src/lib.rs](src/lib.rs), [the library tests](tests/library.rs), [API contract](docs/API.md) and [benchmark methodology](docs/BENCHMARKS.md). Historical diagnostic artifacts are retained for traceability; local usernames in paths have been replaced with `local-user` for publication. They are local measurements, not production throughput promises.
+
+## Run from source
+
+Install Rust 1.99.1, then from the project folder:
+
+```powershell
+cargo fmt
+cargo test --locked
+cargo run --bin api
+```
+
+In another terminal:
+
+```powershell
+.\examples\test-api.ps1
+.\examples\test-both-mismatches.ps1
+.\examples\test-events.ps1
+```
+
+Default address: `http://127.0.0.1:3000`. Loopback-only development works without a token. Stop the server with Ctrl+C before rebuilding on Windows. Rust code changes require a restart; data file changes do not.
+
+## Use the Windows release archive
+
+Extract the complete archive into a folder and open PowerShell there:
+
+```powershell
+.\api.exe
+```
+
+In another terminal in that folder, run `./examples/test-api.ps1`. The archive contains example data, documentation, and checksums. For file reports:
+
+```powershell
+.\hello_cargo.exe data/internal.json data/provider.json report.json
+```
+
+The equivalent source command is:
+
+```powershell
+cargo run -- data/internal.json data/provider.json report.json
+```
+
+## Authenticated service
+
+Set a random token of at least 32 printable ASCII characters in the server terminal:
+
+```powershell
+$env:RECONCILE_API_KEY = Read-Host 'Paste a random token of at least 32 characters'
+cargo run --bin api
+```
+
+Set the same environment variable in the client terminal; the example scripts then add `Authorization: Bearer ...`. Do not commit tokens. Non-loopback binding is refused without a token. Use HTTPS at a trusted reverse proxy for any remote access; see [deployment](docs/DEPLOYMENT.md).
+
+## Current payment format
+
+```json
+{"id":"PAY-001","currency":"GBP","amount_minor":10000,"status":"Completed"}
+```
+
+Currency is mandatory. Supported values: GBP, USD, EUR (two decimal minor units) and JPY (zero). No currency conversion is performed. See [migration notes](docs/MIGRATION.md) before upgrading from `amount_pence`.
+
+## Integration documents
+
+- [API contract](docs/API.md): requests, responses, result names, and errors.
+- [OpenAPI](docs/openapi.json): generated machine-readable schemas; also available at `GET /openapi.json`.
+- [Deployment](docs/DEPLOYMENT.md): configuration, authentication, limits, TLS, containers, operations.
+- [Traceability](docs/TRACEABILITY.md): report metadata and reproducibility limits.
+- [Benchmarks](docs/BENCHMARKS.md): workloads, repeatable commands, and measured results.
+- [Release checklist](docs/RELEASING.md): packaging and GitHub handoff.
+
+## Code map
+
+| File | Responsibility |
+| --- | --- |
+| `src/lib.rs` | `reconcile_report` public entry point |
+| `src/payment.rs` | Types, supported currencies, ID validation |
+| `src/reconciliation.rs` | Matching and combined findings |
+| `src/recovery.rs` | Recommended investigations |
+| `src/report.rs` | Report details and counts |
+| `src/audit.rs` | IDs, timestamps, versions, input fingerprints |
+| `src/main.rs`, `src/input.rs` | File-based command-line interface |
+| `src/bin/api` | HTTP contract, configuration, authentication, limits |
+| `src/bin/benchmark.rs` | Repeatable in-memory performance harness |
+
+## Release and verification
+
+```powershell
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+.\scripts\benchmark.ps1
+.\scripts\package.ps1
+```
+
+CI is prepared for Windows/Linux tests, formatting, linting, release builds, dependency audit, and a Docker build. These hosted jobs require pushing the repository to GitHub; local checks do not prove hosted workflows or containers have run.
+
+The service uses one shared token, not tenant isolation or a user-management system. Reports are returned, not durably stored by the API. A pilot operator must retain source snapshots and reports under their own access and retention policies. This is not a banking certification or a production performance guarantee.
+## Comparative performance and API load testing
+
+See [the benchmark guide](perf/README.md) for reproducible engine comparisons and isolated, authenticated HTTP load tests. Results are saved under docs/performance.
+
+Latest verified changes and measurements: [overload reliability and performance improvements](docs/performance/IMPROVEMENTS.md). Bank-facing release requirements are tracked in [engineering readiness](docs/ENGINEERING-READINESS.md).
+
+## Continuous events
+
+The [event walkthrough](docs/EVENTS.md) explains POST /v1/events, GET /v1/payments/{payment_id}, durable SQLite storage, duplicate protection, stale versions and the waiting deadline. Existing snapshot commands still work.
+Persistent event performance: [run the load test](docs/EVENT-PERFORMANCE.md) and [read the local baseline](docs/performance/event-load-baseline.md).
+Bounded event queue: [behaviour and timings](docs/EVENT-QUEUE.md), with [before/after measurements](docs/performance/event-queue-comparison.md).

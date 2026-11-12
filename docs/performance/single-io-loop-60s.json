@@ -1,0 +1,903 @@
+{
+  "all_cases_passed": false,
+  "cpu": "Intel(R) Core(TM) i7-14650HX",
+  "results": [
+    {
+      "admission_seconds": 60,
+      "all_attempt_latency": {
+        "count": 24672,
+        "max_ms": 193.5035,
+        "mean_ms": 19.46016929312581,
+        "p50_ms": 12.7765,
+        "p95_ms": 54.1565,
+        "p99_ms": 78.9506
+      },
+      "applied_updates": 12336,
+      "applied_updates_per_second": 205.04630355593656,
+      "completed_payments": 4112,
+      "concurrency": 8,
+      "correctness_passed": true,
+      "drain_seconds": 0.1620209000000017,
+      "duplicate_receipts": 4112,
+      "elapsed_seconds_including_drain": 60.1620209,
+      "errors": [],
+      "event_stage_latency": {
+        "Applied.event_begin": {
+          "count": 12336,
+          "max_ms": 0.4402,
+          "mean_ms": 0.02511278372243852,
+          "p50_ms": 0.0195,
+          "p95_ms": 0.0556,
+          "p99_ms": 0.1085
+        },
+        "Applied.event_body": {
+          "count": 12336,
+          "max_ms": 0.2438,
+          "mean_ms": 0.0022749999999999646,
+          "p50_ms": 0.0019,
+          "p95_ms": 0.0047,
+          "p99_ms": 0.0097
+        },
+        "Applied.event_commit": {
+          "count": 12336,
+          "max_ms": 35.2396,
+          "mean_ms": 0.9521687094682222,
+          "p50_ms": 0.7363,
+          "p95_ms": 1.7754,
+          "p99_ms": 4.2647
+        },
+        "Applied.event_dispatch": {
+          "count": 12336,
+          "max_ms": 2.2412,
+          "mean_ms": 0.03425178339818397,
+          "p50_ms": 0.0103,
+          "p95_ms": 0.1431,
+          "p99_ms": 0.4126
+        },
+        "Applied.event_encode": {
+          "count": 12336,
+          "max_ms": 0.3233,
+          "mean_ms": 0.004598889429312586,
+          "p50_ms": 0.0036,
+          "p95_ms": 0.0103,
+          "p99_ms": 0.021
+        },
+        "Applied.event_prepare": {
+          "count": 12336,
+          "max_ms": 0.116,
+          "mean_ms": 0.0027886673151751,
+          "p50_ms": 0.0021,
+          "p95_ms": 0.0073,
+          "p99_ms": 0.0134
+        },
+        "Applied.event_queue": {
+          "count": 12336,
+          "max_ms": 80.3069,
+          "mean_ms": 2.312798346303504,
+          "p50_ms": 0.5969,
+          "p95_ms": 13.4168,
+          "p99_ms": 25.674
+        },
+        "Applied.event_resume": {
+          "count": 12336,
+          "max_ms": 60.4641,
+          "mean_ms": 1.2424549205577182,
+          "p50_ms": 0.0235,
+          "p95_ms": 11.2556,
+          "p99_ms": 19.4676
+        },
+        "Applied.event_service": {
+          "count": 12336,
+          "max_ms": 35.3361,
+          "mean_ms": 1.1033335359922194,
+          "p50_ms": 0.8762,
+          "p95_ms": 2.0411,
+          "p99_ms": 4.9311
+        },
+        "Applied.event_work": {
+          "count": 12336,
+          "max_ms": 1.2557,
+          "mean_ms": 0.11663556258106347,
+          "p50_ms": 0.1006,
+          "p95_ms": 0.2315,
+          "p99_ms": 0.4742
+        },
+        "Duplicate.event_begin": {
+          "count": 4112,
+          "max_ms": 0.3153,
+          "mean_ms": 0.024763618677042857,
+          "p50_ms": 0.0197,
+          "p95_ms": 0.0547,
+          "p99_ms": 0.0972
+        },
+        "Duplicate.event_body": {
+          "count": 4112,
+          "max_ms": 0.0571,
+          "mean_ms": 0.002291050583657586,
+          "p50_ms": 0.002,
+          "p95_ms": 0.0045,
+          "p99_ms": 0.0086
+        },
+        "Duplicate.event_commit": {
+          "count": 4112,
+          "max_ms": 0.1825,
+          "mean_ms": 0.007446692607003971,
+          "p50_ms": 0.0056,
+          "p95_ms": 0.0161,
+          "p99_ms": 0.0338
+        },
+        "Duplicate.event_dispatch": {
+          "count": 4112,
+          "max_ms": 3.2962,
+          "mean_ms": 0.031761867704280106,
+          "p50_ms": 0.0103,
+          "p95_ms": 0.1345,
+          "p99_ms": 0.3547
+        },
+        "Duplicate.event_encode": {
+          "count": 4112,
+          "max_ms": 0.593,
+          "mean_ms": 0.003885578793774311,
+          "p50_ms": 0.0031,
+          "p95_ms": 0.0079,
+          "p99_ms": 0.017
+        },
+        "Duplicate.event_prepare": {
+          "count": 4112,
+          "max_ms": 0.1312,
+          "mean_ms": 0.002853696498054467,
+          "p50_ms": 0.0021,
+          "p95_ms": 0.0074,
+          "p99_ms": 0.0121
+        },
+        "Duplicate.event_queue": {
+          "count": 4112,
+          "max_ms": 81.7577,
+          "mean_ms": 2.205917436770426,
+          "p50_ms": 0.3992,
+          "p95_ms": 13.2296,
+          "p99_ms": 24.5929
+        },
+        "Duplicate.event_resume": {
+          "count": 4112,
+          "max_ms": 53.817,
+          "mean_ms": 0.7726420963035017,
+          "p50_ms": 0.0221,
+          "p95_ms": 5.7438,
+          "p99_ms": 17.7105
+        },
+        "Duplicate.event_service": {
+          "count": 4112,
+          "max_ms": 0.895,
+          "mean_ms": 0.09443737840466937,
+          "p50_ms": 0.0824,
+          "p95_ms": 0.1864,
+          "p99_ms": 0.3398
+        },
+        "Duplicate.event_work": {
+          "count": 4112,
+          "max_ms": 0.5388,
+          "mean_ms": 0.053342679961089545,
+          "p50_ms": 0.0462,
+          "p95_ms": 0.109,
+          "p99_ms": 0.1976
+        },
+        "Read.event_begin": {
+          "count": 4112,
+          "max_ms": 0.1348,
+          "mean_ms": 0.006033560311284014,
+          "p50_ms": 0.0042,
+          "p95_ms": 0.0149,
+          "p99_ms": 0.0294
+        },
+        "Read.event_body": {
+          "count": 4112,
+          "max_ms": 0.0,
+          "mean_ms": 0.0,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0,
+          "p99_ms": 0.0
+        },
+        "Read.event_commit": {
+          "count": 4112,
+          "max_ms": 0.1924,
+          "mean_ms": 0.005582441634241203,
+          "p50_ms": 0.0036,
+          "p95_ms": 0.0145,
+          "p99_ms": 0.0283
+        },
+        "Read.event_dispatch": {
+          "count": 4112,
+          "max_ms": 5.3562,
+          "mean_ms": 0.03743302529182877,
+          "p50_ms": 0.0104,
+          "p95_ms": 0.147,
+          "p99_ms": 0.4486
+        },
+        "Read.event_encode": {
+          "count": 4112,
+          "max_ms": 0.4678,
+          "mean_ms": 0.004115734435797696,
+          "p50_ms": 0.0028,
+          "p95_ms": 0.0096,
+          "p99_ms": 0.0214
+        },
+        "Read.event_prepare": {
+          "count": 4112,
+          "max_ms": 0.0739,
+          "mean_ms": 0.00037762645914395294,
+          "p50_ms": 0.0003,
+          "p95_ms": 0.0008,
+          "p99_ms": 0.0015
+        },
+        "Read.event_queue": {
+          "count": 4112,
+          "max_ms": 66.9519,
+          "mean_ms": 2.8171477383268493,
+          "p50_ms": 0.7192,
+          "p95_ms": 15.2447,
+          "p99_ms": 29.4369
+        },
+        "Read.event_resume": {
+          "count": 4112,
+          "max_ms": 80.0269,
+          "mean_ms": 1.4617112597276263,
+          "p50_ms": 0.0333,
+          "p95_ms": 11.9273,
+          "p99_ms": 27.7389
+        },
+        "Read.event_service": {
+          "count": 4112,
+          "max_ms": 0.9474,
+          "mean_ms": 0.08178125000000018,
+          "p50_ms": 0.0632,
+          "p95_ms": 0.1916,
+          "p99_ms": 0.4162
+        },
+        "Read.event_work": {
+          "count": 4112,
+          "max_ms": 0.9366,
+          "mean_ms": 0.06838895914396889,
+          "p50_ms": 0.0521,
+          "p95_ms": 0.162,
+          "p99_ms": 0.3378
+        },
+        "Stale.event_begin": {
+          "count": 4112,
+          "max_ms": 0.2399,
+          "mean_ms": 0.02512521887159538,
+          "p50_ms": 0.0198,
+          "p95_ms": 0.0559,
+          "p99_ms": 0.1083
+        },
+        "Stale.event_body": {
+          "count": 4112,
+          "max_ms": 0.068,
+          "mean_ms": 0.0021485651750972738,
+          "p50_ms": 0.0018,
+          "p95_ms": 0.0046,
+          "p99_ms": 0.0093
+        },
+        "Stale.event_commit": {
+          "count": 4112,
+          "max_ms": 14.9427,
+          "mean_ms": 0.8923423151750962,
+          "p50_ms": 0.6981,
+          "p95_ms": 1.6561,
+          "p99_ms": 3.2274
+        },
+        "Stale.event_dispatch": {
+          "count": 4112,
+          "max_ms": 1.7176,
+          "mean_ms": 0.03284849221789887,
+          "p50_ms": 0.0106,
+          "p95_ms": 0.1346,
+          "p99_ms": 0.3659
+        },
+        "Stale.event_encode": {
+          "count": 4112,
+          "max_ms": 0.1191,
+          "mean_ms": 0.004649683852140066,
+          "p50_ms": 0.0037,
+          "p95_ms": 0.01,
+          "p99_ms": 0.0209
+        },
+        "Stale.event_prepare": {
+          "count": 4112,
+          "max_ms": 0.08,
+          "mean_ms": 0.002815466926070041,
+          "p50_ms": 0.0021,
+          "p95_ms": 0.0077,
+          "p99_ms": 0.013
+        },
+        "Stale.event_queue": {
+          "count": 4112,
+          "max_ms": 46.5263,
+          "mean_ms": 2.329860457198444,
+          "p50_ms": 0.7592,
+          "p95_ms": 13.1836,
+          "p99_ms": 24.7615
+        },
+        "Stale.event_resume": {
+          "count": 4112,
+          "max_ms": 42.8851,
+          "mean_ms": 1.065653428988326,
+          "p50_ms": 0.0233,
+          "p95_ms": 10.3738,
+          "p99_ms": 18.1469
+        },
+        "Stale.event_service": {
+          "count": 4112,
+          "max_ms": 15.5522,
+          "mean_ms": 1.0021059581712046,
+          "p50_ms": 0.8018,
+          "p95_ms": 1.8675,
+          "p99_ms": 3.7237
+        },
+        "Stale.event_work": {
+          "count": 4112,
+          "max_ms": 0.6737,
+          "mean_ms": 0.07494834630350179,
+          "p50_ms": 0.0643,
+          "p95_ms": 0.1519,
+          "p99_ms": 0.312
+        }
+      },
+      "http_status_counts": {
+        "200": 24672
+      },
+      "load_model": "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+      "logical_post_latency_including_retries": {
+        "count": 20560,
+        "max_ms": 187.0609,
+        "mean_ms": 18.240231887159446,
+        "p50_ms": 11.8184,
+        "p95_ms": 49.2879,
+        "p99_ms": 71.2904
+      },
+      "process_scheduling_gaps": [],
+      "rejection_codes": {},
+      "run_id": "2537c4b2ea964d60b9406917fc175dd5",
+      "sample_payment_id": "LOAD-2537c4b2ea964d60b9406917fc175dd5-0-0",
+      "schema_version": 4,
+      "stale_receipts": 4112,
+      "status_read_latency_including_retries": {
+        "count": 4112,
+        "max_ms": 193.5254,
+        "mean_ms": 25.644153307393008,
+        "p50_ms": 21.5119,
+        "p95_ms": 68.25359999999999,
+        "p99_ms": 96.9872
+      },
+      "successful_post_attempt_latency": {
+        "count": 20560,
+        "max_ms": 187.0319,
+        "mean_ms": 18.22603255836582,
+        "p50_ms": 11.806799999999999,
+        "p95_ms": 49.2733,
+        "p99_ms": 71.2791
+      },
+      "successful_post_latency_by_outcome": {
+        "Applied": {
+          "count": 12336,
+          "max_ms": 187.0319,
+          "mean_ms": 18.657884881647213,
+          "p50_ms": 12.160499999999999,
+          "p95_ms": 50.1423,
+          "p99_ms": 74.5258
+        },
+        "Duplicate": {
+          "count": 4112,
+          "max_ms": 135.5813,
+          "mean_ms": 16.89693594357974,
+          "p50_ms": 11.0243,
+          "p95_ms": 46.220400000000005,
+          "p99_ms": 65.2906
+        },
+        "Stale": {
+          "count": 4112,
+          "max_ms": 135.2228,
+          "mean_ms": 18.259572203307364,
+          "p50_ms": 11.499600000000001,
+          "p95_ms": 49.6425,
+          "p99_ms": 71.5069
+        }
+      },
+      "unique_committed_events": 16448,
+      "unique_committed_events_per_second": 273.3950714079154,
+      "workload": "five event posts and one status read per payment",
+      "load_client_exit_code": 0,
+      "validation_passed": true,
+      "profile": "capacity",
+      "rate_limit": 10000,
+      "event_queue_capacity": 32,
+      "database_audit": {
+        "applied_rows": 12336,
+        "event_log_rows": 16448,
+        "expected_completed_payments": 4112,
+        "expected_run_id": "2537c4b2ea964d60b9406917fc175dd5",
+        "foreign_workload_payments": 0,
+        "incorrect_source_states": 0,
+        "integrity": "ok",
+        "passed": true,
+        "payments": 4112,
+        "scope": "Complete-lifecycle expectations; interrupted requests can leave valid partial state",
+        "source_states": 8224,
+        "stale_rows": 4112
+      },
+      "restart_lookup_passed": true,
+      "database_path": "C:\\Users\\local-user\\rust\\hello_cargo\\target\\perf\\events\\20261110-183316-f3dbb6b0-case-3.sqlite3",
+      "storage": {
+        "peak_db_wal_shm_bytes": 13000400,
+        "initial_bytes": 65736,
+        "final_db_wal_shm_bytes": 13000400,
+        "main_db_bytes": 8806400
+      },
+      "resources": {
+        "peak_sampled_server_working_set_bytes": 11309056,
+        "sampling_ms": 50,
+        "server_cpu_seconds": 17.4375
+      }
+    },
+    {
+      "admission_seconds": 60,
+      "all_attempt_latency": {
+        "count": 25709,
+        "max_ms": 10028.599699999999,
+        "mean_ms": 24.50657320393636,
+        "p50_ms": 12.625300000000001,
+        "p95_ms": 51.01,
+        "p99_ms": 86.2424
+      },
+      "applied_updates": 12659,
+      "applied_updates_per_second": 189.82250796268607,
+      "completed_payments": 4211,
+      "concurrency": 16,
+      "correctness_passed": false,
+      "drain_seconds": 6.6886142000000035,
+      "duplicate_receipts": 4216,
+      "elapsed_seconds_including_drain": 66.6886142,
+      "errors": [
+        "timeout after 10.012s: error sending request: operation timed out",
+        "timeout after 10.013s: error sending request: operation timed out",
+        "timeout after 10.023s: error sending request: operation timed out",
+        "timeout after 10.013s: error sending request: operation timed out",
+        "timeout after 10.013s: error sending request: operation timed out",
+        "timeout after 10.013s: error sending request: operation timed out",
+        "timeout after 10.013s: error sending request: operation timed out",
+        "timeout after 10.014s: error sending request: operation timed out",
+        "timeout after 10.023s: error sending request: operation timed out",
+        "timeout after 10.028s: error sending request: operation timed out",
+        "timeout after 10.029s: error sending request: operation timed out",
+        "timeout after 10.029s: error sending request: operation timed out"
+      ],
+      "event_stage_latency": {
+        "Applied.event_begin": {
+          "count": 12659,
+          "max_ms": 0.4404,
+          "mean_ms": 0.02621358717118254,
+          "p50_ms": 0.0228,
+          "p95_ms": 0.0523,
+          "p99_ms": 0.0966
+        },
+        "Applied.event_body": {
+          "count": 12659,
+          "max_ms": 0.0402,
+          "mean_ms": 0.0022185954656765397,
+          "p50_ms": 0.0022,
+          "p95_ms": 0.0044,
+          "p99_ms": 0.007
+        },
+        "Applied.event_commit": {
+          "count": 12659,
+          "max_ms": 263.3503,
+          "mean_ms": 1.8913633225373232,
+          "p50_ms": 0.7511,
+          "p95_ms": 7.1394,
+          "p99_ms": 14.1291
+        },
+        "Applied.event_dispatch": {
+          "count": 12659,
+          "max_ms": 21.8424,
+          "mean_ms": 0.02320030808120703,
+          "p50_ms": 0.0127,
+          "p95_ms": 0.0612,
+          "p99_ms": 0.2233
+        },
+        "Applied.event_encode": {
+          "count": 12659,
+          "max_ms": 0.118,
+          "mean_ms": 0.0044831029307215685,
+          "p50_ms": 0.0041,
+          "p95_ms": 0.0079,
+          "p99_ms": 0.0135
+        },
+        "Applied.event_prepare": {
+          "count": 12659,
+          "max_ms": 0.1885,
+          "mean_ms": 0.0028420333359666637,
+          "p50_ms": 0.0023,
+          "p95_ms": 0.0064,
+          "p99_ms": 0.0105
+        },
+        "Applied.event_queue": {
+          "count": 12659,
+          "max_ms": 531.5979,
+          "mean_ms": 7.0086754245991,
+          "p50_ms": 1.6288,
+          "p95_ms": 32.4603,
+          "p99_ms": 63.2639
+        },
+        "Applied.event_resume": {
+          "count": 12659,
+          "max_ms": 53.6867,
+          "mean_ms": 0.7138349395686856,
+          "p50_ms": 0.0297,
+          "p95_ms": 5.5923,
+          "p99_ms": 11.8132
+        },
+        "Applied.event_service": {
+          "count": 12659,
+          "max_ms": 263.5752,
+          "mean_ms": 2.0485986728809586,
+          "p50_ms": 0.9061,
+          "p95_ms": 7.3132,
+          "p99_ms": 14.4217
+        },
+        "Applied.event_work": {
+          "count": 12659,
+          "max_ms": 7.2022,
+          "mean_ms": 0.12134872422782182,
+          "p50_ms": 0.1118,
+          "p95_ms": 0.1932,
+          "p99_ms": 0.3235
+        },
+        "Duplicate.event_begin": {
+          "count": 4216,
+          "max_ms": 0.6521,
+          "mean_ms": 0.02583524667931688,
+          "p50_ms": 0.0226,
+          "p95_ms": 0.0497,
+          "p99_ms": 0.0984
+        },
+        "Duplicate.event_body": {
+          "count": 4216,
+          "max_ms": 0.0497,
+          "mean_ms": 0.002358064516129062,
+          "p50_ms": 0.0022,
+          "p95_ms": 0.0045,
+          "p99_ms": 0.0084
+        },
+        "Duplicate.event_commit": {
+          "count": 4216,
+          "max_ms": 0.1178,
+          "mean_ms": 0.007866508538899551,
+          "p50_ms": 0.0077,
+          "p95_ms": 0.014,
+          "p99_ms": 0.0302
+        },
+        "Duplicate.event_dispatch": {
+          "count": 4216,
+          "max_ms": 3.5099,
+          "mean_ms": 0.021814065464895657,
+          "p50_ms": 0.0128,
+          "p95_ms": 0.059,
+          "p99_ms": 0.2018
+        },
+        "Duplicate.event_encode": {
+          "count": 4216,
+          "max_ms": 0.2721,
+          "mean_ms": 0.003550616698292205,
+          "p50_ms": 0.0031,
+          "p95_ms": 0.0056,
+          "p99_ms": 0.0124
+        },
+        "Duplicate.event_prepare": {
+          "count": 4216,
+          "max_ms": 0.098,
+          "mean_ms": 0.0027912239089184095,
+          "p50_ms": 0.0023,
+          "p95_ms": 0.0065,
+          "p99_ms": 0.0124
+        },
+        "Duplicate.event_queue": {
+          "count": 4216,
+          "max_ms": 529.6256,
+          "mean_ms": 6.991337001897535,
+          "p50_ms": 1.4341,
+          "p95_ms": 33.4227,
+          "p99_ms": 61.4848
+        },
+        "Duplicate.event_resume": {
+          "count": 4216,
+          "max_ms": 24.3715,
+          "mean_ms": 0.4127813804554079,
+          "p50_ms": 0.0276,
+          "p95_ms": 1.4576,
+          "p99_ms": 10.7665
+        },
+        "Duplicate.event_service": {
+          "count": 4216,
+          "max_ms": 0.9766,
+          "mean_ms": 0.0986626185958254,
+          "p50_ms": 0.0914,
+          "p95_ms": 0.1709,
+          "p99_ms": 0.2753
+        },
+        "Duplicate.event_work": {
+          "count": 4216,
+          "max_ms": 0.6066,
+          "mean_ms": 0.05586769449715357,
+          "p50_ms": 0.0516,
+          "p95_ms": 0.0989,
+          "p99_ms": 0.1645
+        },
+        "Read.event_begin": {
+          "count": 4211,
+          "max_ms": 0.0935,
+          "mean_ms": 0.005846521016385632,
+          "p50_ms": 0.0044,
+          "p95_ms": 0.013,
+          "p99_ms": 0.0235
+        },
+        "Read.event_body": {
+          "count": 4211,
+          "max_ms": 0.0,
+          "mean_ms": 0.0,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0,
+          "p99_ms": 0.0
+        },
+        "Read.event_commit": {
+          "count": 4211,
+          "max_ms": 0.0588,
+          "mean_ms": 0.005353312752315318,
+          "p50_ms": 0.0054,
+          "p95_ms": 0.0098,
+          "p99_ms": 0.0179
+        },
+        "Read.event_dispatch": {
+          "count": 4211,
+          "max_ms": 0.5627,
+          "mean_ms": 0.01999047732130137,
+          "p50_ms": 0.0127,
+          "p95_ms": 0.0528,
+          "p99_ms": 0.1779
+        },
+        "Read.event_encode": {
+          "count": 4211,
+          "max_ms": 0.0631,
+          "mean_ms": 0.0031470672049394616,
+          "p50_ms": 0.0028,
+          "p95_ms": 0.0054,
+          "p99_ms": 0.0101
+        },
+        "Read.event_prepare": {
+          "count": 4211,
+          "max_ms": 0.0249,
+          "mean_ms": 0.0003284492994537946,
+          "p50_ms": 0.0003,
+          "p95_ms": 0.0006,
+          "p99_ms": 0.001
+        },
+        "Read.event_queue": {
+          "count": 4211,
+          "max_ms": 498.2012,
+          "mean_ms": 6.554452529090477,
+          "p50_ms": 2.0639,
+          "p95_ms": 29.5287,
+          "p99_ms": 57.8824
+        },
+        "Read.event_resume": {
+          "count": 4211,
+          "max_ms": 29.0912,
+          "mean_ms": 0.5849401567323673,
+          "p50_ms": 0.0391,
+          "p95_ms": 3.7669,
+          "p99_ms": 12.8131
+        },
+        "Read.event_service": {
+          "count": 4211,
+          "max_ms": 0.9041,
+          "mean_ms": 0.07786936594633112,
+          "p50_ms": 0.0713,
+          "p95_ms": 0.1409,
+          "p99_ms": 0.226
+        },
+        "Read.event_work": {
+          "count": 4211,
+          "max_ms": 0.7975,
+          "mean_ms": 0.06504428876751356,
+          "p50_ms": 0.0592,
+          "p95_ms": 0.1179,
+          "p99_ms": 0.2019
+        },
+        "Stale.event_begin": {
+          "count": 4215,
+          "max_ms": 0.3612,
+          "mean_ms": 0.02579914590747325,
+          "p50_ms": 0.0226,
+          "p95_ms": 0.0524,
+          "p99_ms": 0.0924
+        },
+        "Stale.event_body": {
+          "count": 4215,
+          "max_ms": 0.0915,
+          "mean_ms": 0.00206998813760382,
+          "p50_ms": 0.002,
+          "p95_ms": 0.0042,
+          "p99_ms": 0.0064
+        },
+        "Stale.event_commit": {
+          "count": 4215,
+          "max_ms": 213.42,
+          "mean_ms": 1.7541622538552781,
+          "p50_ms": 0.7106,
+          "p95_ms": 6.9575,
+          "p99_ms": 14.6393
+        },
+        "Stale.event_dispatch": {
+          "count": 4215,
+          "max_ms": 2.8269,
+          "mean_ms": 0.021994970344009455,
+          "p50_ms": 0.0127,
+          "p95_ms": 0.0632,
+          "p99_ms": 0.2004
+        },
+        "Stale.event_encode": {
+          "count": 4215,
+          "max_ms": 0.1983,
+          "mean_ms": 0.004575017793594337,
+          "p50_ms": 0.0041,
+          "p95_ms": 0.0076,
+          "p99_ms": 0.0131
+        },
+        "Stale.event_prepare": {
+          "count": 4215,
+          "max_ms": 0.1719,
+          "mean_ms": 0.0028560854092526716,
+          "p50_ms": 0.0023,
+          "p95_ms": 0.0067,
+          "p99_ms": 0.0111
+        },
+        "Stale.event_queue": {
+          "count": 4215,
+          "max_ms": 378.3147,
+          "mean_ms": 6.256018671411627,
+          "p50_ms": 1.6358,
+          "p95_ms": 29.1753,
+          "p99_ms": 60.1075
+        },
+        "Stale.event_resume": {
+          "count": 4215,
+          "max_ms": 50.7267,
+          "mean_ms": 0.6028951126927642,
+          "p50_ms": 0.0293,
+          "p95_ms": 4.4693,
+          "p99_ms": 10.3635
+        },
+        "Stale.event_service": {
+          "count": 4215,
+          "max_ms": 213.74,
+          "mean_ms": 1.86888984578885,
+          "p50_ms": 0.8216,
+          "p95_ms": 7.1246,
+          "p99_ms": 14.7198
+        },
+        "Stale.event_work": {
+          "count": 4215,
+          "max_ms": 5.3051,
+          "mean_ms": 0.07898483985765142,
+          "p50_ms": 0.0714,
+          "p95_ms": 0.1307,
+          "p99_ms": 0.2202
+        }
+      },
+      "http_status_counts": {
+        "0": 12,
+        "200": 25301,
+        "503": 396
+      },
+      "load_model": "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+      "logical_post_latency_including_retries": {
+        "count": 21090,
+        "max_ms": 10925.2558,
+        "mean_ms": 37.08308710763398,
+        "p50_ms": 12.301599999999999,
+        "p95_ms": 55.035199999999996,
+        "p99_ms": 1025.1803
+      },
+      "process_scheduling_gaps": [],
+      "rejection_codes": {
+        "busy": 396
+      },
+      "run_id": "15c1aff1e84c4edebfc23ce0251457fc",
+      "sample_payment_id": "LOAD-15c1aff1e84c4edebfc23ce0251457fc-14-0",
+      "schema_version": 4,
+      "stale_receipts": 4215,
+      "status_read_latency_including_retries": {
+        "count": 4211,
+        "max_ms": 10596.418099999999,
+        "mean_ms": 38.89138017098077,
+        "p50_ms": 16.5913,
+        "p95_ms": 54.7253,
+        "p99_ms": 1015.0113999999999
+      },
+      "successful_post_attempt_latency": {
+        "count": 21090,
+        "max_ms": 554.6892,
+        "mean_ms": 19.604228748221868,
+        "p50_ms": 12.1876,
+        "p95_ms": 50.861000000000004,
+        "p99_ms": 86.7724
+      },
+      "successful_post_latency_by_outcome": {
+        "Applied": {
+          "count": 12659,
+          "max_ms": 552.6284999999999,
+          "mean_ms": 20.305323903941908,
+          "p50_ms": 12.460199999999999,
+          "p95_ms": 52.3675,
+          "p99_ms": 90.77459999999999
+        },
+        "Duplicate": {
+          "count": 4216,
+          "max_ms": 548.4219,
+          "mean_ms": 17.95226548861482,
+          "p50_ms": 11.2616,
+          "p95_ms": 45.7134,
+          "p99_ms": 76.9856
+        },
+        "Stale": {
+          "count": 4215,
+          "max_ms": 554.6892,
+          "mean_ms": 19.150969798339247,
+          "p50_ms": 12.3538,
+          "p95_ms": 49.1382,
+          "p99_ms": 80.8603
+        }
+      },
+      "unique_committed_events": 16874,
+      "unique_committed_events_per_second": 253.02670032090725,
+      "workload": "five event posts and one status read per payment",
+      "load_client_exit_code": 1,
+      "validation_passed": false,
+      "profile": "capacity",
+      "rate_limit": 10000,
+      "event_queue_capacity": 32,
+      "database_audit": {
+        "applied_rows": 12661,
+        "event_log_rows": 16876,
+        "expected_completed_payments": 4211,
+        "expected_run_id": "15c1aff1e84c4edebfc23ce0251457fc",
+        "foreign_workload_payments": 0,
+        "incorrect_source_states": 1,
+        "integrity": "ok",
+        "passed": false,
+        "payments": 4222,
+        "scope": "Complete-lifecycle expectations; interrupted requests can leave valid partial state",
+        "source_states": 8442,
+        "stale_rows": 4215
+      },
+      "restart_lookup_passed": true,
+      "database_path": "C:\\Users\\local-user\\rust\\hello_cargo\\target\\perf\\events\\20261110-183316-f3dbb6b0-case-4.sqlite3",
+      "storage": {
+        "peak_db_wal_shm_bytes": 13344488,
+        "initial_bytes": 65736,
+        "final_db_wal_shm_bytes": 13344488,
+        "main_db_bytes": 9146368
+      },
+      "resources": {
+        "peak_sampled_server_working_set_bytes": 11321344,
+        "sampling_ms": 50,
+        "server_cpu_seconds": 18.140625
+      }
+    }
+  ],
+  "api_sha256": "F18DA0E59A3283C0D673E5991EB9F19FCC88E2ACA89AC14757E6996E22FD1B9D",
+  "logical_processors": 24,
+  "api_binary": "target/perf-api-trace/release/api.exe",
+  "client_sha256": "DF642B0D0EDD90765253C70122B418E855B5EF89782E5ED8E2F615AE25C3E395",
+  "scope": "Local loopback, client and API on same host; fresh SQLite WAL/FULL database per case; no warmup events; closed-loop mixed lifecycle, not an open-loop arrival test",
+  "generated_at": "2026-11-10T18:35:27.8948723Z"
+}

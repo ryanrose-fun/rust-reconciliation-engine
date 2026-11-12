@@ -1,0 +1,5 @@
+# Replace the hostname with your own DNS name. Run Caddy on the same host
+# as the loopback-only published Docker port. Restrict direct port 3000 access.
+reconcile.example.com {
+    reverse_proxy 127.0.0.1:3000
+}

@@ -1,0 +1,779 @@
+{
+    "api_sha256":  "FFE17ED897AF5B480D49C87A58F00EA0A55BAC27AA88DD5EA076B99874F51C8C",
+    "client_sha256":  "DF642B0D0EDD90765253C70122B418E855B5EF89782E5ED8E2F615AE25C3E395",
+    "cpu":  "Intel(R) Core(TM) i7-14650HX",
+    "api_binary":  "target/perf-api/release/api.exe",
+    "results":  [
+                    {
+                        "admission_seconds":  30,
+                        "all_attempt_latency":  {
+                                                    "count":  998,
+                                                    "max_ms":  10016.918099999999,
+                                                    "mean_ms":  87.53297174348695,
+                                                    "p50_ms":  7.3814,
+                                                    "p95_ms":  9.3104,
+                                                    "p99_ms":  17.2743
+                                                },
+                        "applied_updates":  503,
+                        "applied_updates_per_second":  46.04981441879014,
+                        "completed_payments":  160,
+                        "concurrency":  8,
+                        "correctness_passed":  false,
+                        "drain_seconds":  0.0,
+                        "duplicate_receipts":  164,
+                        "elapsed_seconds_including_drain":  10.9229539,
+                        "errors":  [
+                                       "timeout after 10.010s: error sending request: operation timed out",
+                                       "timeout after 10.017s: error sending request: operation timed out",
+                                       "timeout after 10.016s: error sending request: operation timed out",
+                                       "timeout after 10.013s: error sending request: operation timed out",
+                                       "timeout after 10.012s: error sending request: operation timed out",
+                                       "timeout after 10.013s: error sending request: operation timed out",
+                                       "timeout after 10.015s: error sending request: operation timed out",
+                                       "timeout after 10.015s: error sending request: operation timed out"
+                                   ],
+                        "event_stage_latency":  {
+                                                    "Applied.event_begin":  {
+                                                                                "count":  503,
+                                                                                "max_ms":  0.0938,
+                                                                                "mean_ms":  0.023324453280318083,
+                                                                                "p50_ms":  0.0204,
+                                                                                "p95_ms":  0.0415,
+                                                                                "p99_ms":  0.0616
+                                                                            },
+                                                    "Applied.event_commit":  {
+                                                                                 "count":  503,
+                                                                                 "max_ms":  3.1798,
+                                                                                 "mean_ms":  0.7313041749502988,
+                                                                                 "p50_ms":  0.6948,
+                                                                                 "p95_ms":  0.9423,
+                                                                                 "p99_ms":  1.4848
+                                                                             },
+                                                    "Applied.event_dispatch":  {
+                                                                                   "count":  503,
+                                                                                   "max_ms":  0.5232,
+                                                                                   "mean_ms":  0.01168548707753479,
+                                                                                   "p50_ms":  0.0088,
+                                                                                   "p95_ms":  0.0201,
+                                                                                   "p99_ms":  0.036
+                                                                               },
+                                                    "Applied.event_encode":  {
+                                                                                 "count":  503,
+                                                                                 "max_ms":  0.0332,
+                                                                                 "mean_ms":  0.00471013916500994,
+                                                                                 "p50_ms":  0.0042,
+                                                                                 "p95_ms":  0.0075,
+                                                                                 "p99_ms":  0.0152
+                                                                             },
+                                                    "Applied.event_prepare":  {
+                                                                                  "count":  503,
+                                                                                  "max_ms":  0.0336,
+                                                                                  "mean_ms":  0.002750894632206757,
+                                                                                  "p50_ms":  0.0022,
+                                                                                  "p95_ms":  0.005,
+                                                                                  "p99_ms":  0.0151
+                                                                              },
+                                                    "Applied.event_queue":  {
+                                                                                "count":  503,
+                                                                                "max_ms":  4.578,
+                                                                                "mean_ms":  0.4993061630218689,
+                                                                                "p50_ms":  0.2341,
+                                                                                "p95_ms":  1.6137,
+                                                                                "p99_ms":  2.8668
+                                                                            },
+                                                    "Applied.event_service":  {
+                                                                                  "count":  503,
+                                                                                  "max_ms":  3.2889,
+                                                                                  "mean_ms":  0.8697409542743535,
+                                                                                  "p50_ms":  0.8284,
+                                                                                  "p95_ms":  1.1418,
+                                                                                  "p99_ms":  1.6489
+                                                                              },
+                                                    "Applied.event_work":  {
+                                                                               "count":  503,
+                                                                               "max_ms":  0.5665,
+                                                                               "mean_ms":  0.10578031809145126,
+                                                                               "p50_ms":  0.0934,
+                                                                               "p95_ms":  0.179,
+                                                                               "p99_ms":  0.2253
+                                                                           },
+                                                    "Duplicate.event_begin":  {
+                                                                                  "count":  164,
+                                                                                  "max_ms":  0.0968,
+                                                                                  "mean_ms":  0.02451646341463415,
+                                                                                  "p50_ms":  0.022,
+                                                                                  "p95_ms":  0.0437,
+                                                                                  "p99_ms":  0.0941
+                                                                              },
+                                                    "Duplicate.event_commit":  {
+                                                                                   "count":  164,
+                                                                                   "max_ms":  0.0575,
+                                                                                   "mean_ms":  0.006320731707317072,
+                                                                                   "p50_ms":  0.0046,
+                                                                                   "p95_ms":  0.0114,
+                                                                                   "p99_ms":  0.0482
+                                                                               },
+                                                    "Duplicate.event_dispatch":  {
+                                                                                     "count":  164,
+                                                                                     "max_ms":  0.084,
+                                                                                     "mean_ms":  0.01165670731707317,
+                                                                                     "p50_ms":  0.0095,
+                                                                                     "p95_ms":  0.0241,
+                                                                                     "p99_ms":  0.051
+                                                                                 },
+                                                    "Duplicate.event_encode":  {
+                                                                                   "count":  164,
+                                                                                   "max_ms":  0.0133,
+                                                                                   "mean_ms":  0.004018292682926831,
+                                                                                   "p50_ms":  0.0037,
+                                                                                   "p95_ms":  0.0067,
+                                                                                   "p99_ms":  0.0091
+                                                                               },
+                                                    "Duplicate.event_prepare":  {
+                                                                                    "count":  164,
+                                                                                    "max_ms":  0.0154,
+                                                                                    "mean_ms":  0.0028115853658536604,
+                                                                                    "p50_ms":  0.0023,
+                                                                                    "p95_ms":  0.0062,
+                                                                                    "p99_ms":  0.0134
+                                                                                },
+                                                    "Duplicate.event_queue":  {
+                                                                                  "count":  164,
+                                                                                  "max_ms":  2.2665,
+                                                                                  "mean_ms":  0.29889512195121953,
+                                                                                  "p50_ms":  0.0006,
+                                                                                  "p95_ms":  1.4858,
+                                                                                  "p99_ms":  2.0994
+                                                                              },
+                                                    "Duplicate.event_service":  {
+                                                                                    "count":  164,
+                                                                                    "max_ms":  0.2549,
+                                                                                    "mean_ms":  0.09021097560975606,
+                                                                                    "p50_ms":  0.0813,
+                                                                                    "p95_ms":  0.1459,
+                                                                                    "p99_ms":  0.2502
+                                                                                },
+                                                    "Duplicate.event_work":  {
+                                                                                 "count":  164,
+                                                                                 "max_ms":  0.1126,
+                                                                                 "mean_ms":  0.050311585365853645,
+                                                                                 "p50_ms":  0.0451,
+                                                                                 "p95_ms":  0.0954,
+                                                                                 "p99_ms":  0.1115
+                                                                             },
+                                                    "Read.event_begin":  {
+                                                                             "count":  160,
+                                                                             "max_ms":  0.021,
+                                                                             "mean_ms":  0.0059118750000000005,
+                                                                             "p50_ms":  0.0047,
+                                                                             "p95_ms":  0.0123,
+                                                                             "p99_ms":  0.0205
+                                                                         },
+                                                    "Read.event_commit":  {
+                                                                              "count":  160,
+                                                                              "max_ms":  0.0259,
+                                                                              "mean_ms":  0.003630625000000004,
+                                                                              "p50_ms":  0.0031,
+                                                                              "p95_ms":  0.0068,
+                                                                              "p99_ms":  0.0088
+                                                                          },
+                                                    "Read.event_dispatch":  {
+                                                                                "count":  160,
+                                                                                "max_ms":  0.0362,
+                                                                                "mean_ms":  0.010386249999999998,
+                                                                                "p50_ms":  0.0092,
+                                                                                "p95_ms":  0.0197,
+                                                                                "p99_ms":  0.0273
+                                                                            },
+                                                    "Read.event_encode":  {
+                                                                              "count":  160,
+                                                                              "max_ms":  0.027,
+                                                                              "mean_ms":  0.004246250000000004,
+                                                                              "p50_ms":  0.0035,
+                                                                              "p95_ms":  0.0076,
+                                                                              "p99_ms":  0.0159
+                                                                          },
+                                                    "Read.event_prepare":  {
+                                                                               "count":  160,
+                                                                               "max_ms":  0.0008,
+                                                                               "mean_ms":  0.00027312500000000047,
+                                                                               "p50_ms":  0.0002,
+                                                                               "p95_ms":  0.0005,
+                                                                               "p99_ms":  0.0008
+                                                                           },
+                                                    "Read.event_queue":  {
+                                                                             "count":  160,
+                                                                             "max_ms":  2.429,
+                                                                             "mean_ms":  0.34200125000000003,
+                                                                             "p50_ms":  0.0007,
+                                                                             "p95_ms":  1.4767,
+                                                                             "p99_ms":  2.0408
+                                                                         },
+                                                    "Read.event_service":  {
+                                                                               "count":  160,
+                                                                               "max_ms":  0.1526,
+                                                                               "mean_ms":  0.0632575,
+                                                                               "p50_ms":  0.0563,
+                                                                               "p95_ms":  0.1078,
+                                                                               "p99_ms":  0.1467
+                                                                           },
+                                                    "Read.event_work":  {
+                                                                            "count":  160,
+                                                                            "max_ms":  0.109,
+                                                                            "mean_ms":  0.05190812499999996,
+                                                                            "p50_ms":  0.0463,
+                                                                            "p95_ms":  0.0868,
+                                                                            "p99_ms":  0.1086
+                                                                        },
+                                                    "Stale.event_begin":  {
+                                                                              "count":  163,
+                                                                              "max_ms":  0.0638,
+                                                                              "mean_ms":  0.02225521472392638,
+                                                                              "p50_ms":  0.0196,
+                                                                              "p95_ms":  0.0403,
+                                                                              "p99_ms":  0.0596
+                                                                          },
+                                                    "Stale.event_commit":  {
+                                                                               "count":  163,
+                                                                               "max_ms":  1.3043,
+                                                                               "mean_ms":  0.6857435582822085,
+                                                                               "p50_ms":  0.6569,
+                                                                               "p95_ms":  0.9159,
+                                                                               "p99_ms":  1.2275
+                                                                           },
+                                                    "Stale.event_dispatch":  {
+                                                                                 "count":  163,
+                                                                                 "max_ms":  0.0517,
+                                                                                 "mean_ms":  0.009876073619631906,
+                                                                                 "p50_ms":  0.0083,
+                                                                                 "p95_ms":  0.017,
+                                                                                 "p99_ms":  0.0383
+                                                                             },
+                                                    "Stale.event_encode":  {
+                                                                               "count":  163,
+                                                                               "max_ms":  0.0483,
+                                                                               "mean_ms":  0.004681595092024543,
+                                                                               "p50_ms":  0.004,
+                                                                               "p95_ms":  0.0069,
+                                                                               "p99_ms":  0.0098
+                                                                           },
+                                                    "Stale.event_prepare":  {
+                                                                                "count":  163,
+                                                                                "max_ms":  0.0156,
+                                                                                "mean_ms":  0.002393865030674847,
+                                                                                "p50_ms":  0.0021,
+                                                                                "p95_ms":  0.0035,
+                                                                                "p99_ms":  0.0132
+                                                                            },
+                                                    "Stale.event_queue":  {
+                                                                              "count":  163,
+                                                                              "max_ms":  2.8175,
+                                                                              "mean_ms":  0.4965754601226995,
+                                                                              "p50_ms":  0.3178,
+                                                                              "p95_ms":  1.746,
+                                                                              "p99_ms":  2.4576
+                                                                          },
+                                                    "Stale.event_service":  {
+                                                                                "count":  163,
+                                                                                "max_ms":  1.484,
+                                                                                "mean_ms":  0.7798791411042947,
+                                                                                "p50_ms":  0.753,
+                                                                                "p95_ms":  1.0474,
+                                                                                "p99_ms":  1.3789
+                                                                            },
+                                                    "Stale.event_work":  {
+                                                                             "count":  163,
+                                                                             "max_ms":  0.1626,
+                                                                             "mean_ms":  0.06290736196319019,
+                                                                             "p50_ms":  0.055,
+                                                                             "p95_ms":  0.1025,
+                                                                             "p99_ms":  0.1555
+                                                                         }
+                                                },
+                        "http_status_counts":  {
+                                                   "0":  8,
+                                                   "200":  990
+                                               },
+                        "load_model":  "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+                        "logical_post_latency_including_retries":  {
+                                                                       "count":  830,
+                                                                       "max_ms":  23.611,
+                                                                       "mean_ms":  7.748376746987954,
+                                                                       "p50_ms":  7.5931999999999995,
+                                                                       "p95_ms":  9.3264,
+                                                                       "p99_ms":  11.8222
+                                                                   },
+                        "process_scheduling_gaps":  [
+
+                                                    ],
+                        "rejection_codes":  {
+
+                                            },
+                        "run_id":  "7478fe6f70cf4225b87c04759617503b",
+                        "sample_payment_id":  "LOAD-7478fe6f70cf4225b87c04759617503b-2-0",
+                        "schema_version":  4,
+                        "stale_receipts":  163,
+                        "status_read_latency_including_retries":  {
+                                                                      "count":  160,
+                                                                      "max_ms":  7.3548,
+                                                                      "mean_ms":  5.17368375,
+                                                                      "p50_ms":  4.9649,
+                                                                      "p95_ms":  6.614199999999999,
+                                                                      "p99_ms":  7.2945
+                                                                  },
+                        "successful_post_attempt_latency":  {
+                                                                "count":  830,
+                                                                "max_ms":  23.600800000000003,
+                                                                "mean_ms":  7.736015180722888,
+                                                                "p50_ms":  7.5814,
+                                                                "p95_ms":  9.3104,
+                                                                "p99_ms":  11.8059
+                                                            },
+                        "successful_post_latency_by_outcome":  {
+                                                                   "Applied":  {
+                                                                                   "count":  503,
+                                                                                   "max_ms":  23.600800000000003,
+                                                                                   "mean_ms":  8.008122266401596,
+                                                                                   "p50_ms":  7.7559,
+                                                                                   "p95_ms":  9.438,
+                                                                                   "p99_ms":  13.481399999999999
+                                                                               },
+                                                                   "Duplicate":  {
+                                                                                     "count":  164,
+                                                                                     "max_ms":  9.476099999999999,
+                                                                                     "mean_ms":  6.864184756097566,
+                                                                                     "p50_ms":  6.758,
+                                                                                     "p95_ms":  8.1288,
+                                                                                     "p99_ms":  9.0205
+                                                                                 },
+                                                                   "Stale":  {
+                                                                                 "count":  163,
+                                                                                 "max_ms":  10.566799999999999,
+                                                                                 "mean_ms":  7.773501840490798,
+                                                                                 "p50_ms":  7.6314,
+                                                                                 "p95_ms":  9.2957,
+                                                                                 "p99_ms":  10.1792
+                                                                             }
+                                                               },
+                        "unique_committed_events":  666,
+                        "unique_committed_events_per_second":  60.972517699630686,
+                        "workload":  "five event posts and one status read per payment",
+                        "load_client_exit_code":  1,
+                        "validation_passed":  false,
+                        "profile":  "capacity",
+                        "rate_limit":  10000,
+                        "event_queue_capacity":  32,
+                        "database_audit":  {
+                                               "applied_rows":  504,
+                                               "event_log_rows":  668,
+                                               "expected_completed_payments":  160,
+                                               "expected_run_id":  "7478fe6f70cf4225b87c04759617503b",
+                                               "foreign_workload_payments":  0,
+                                               "incorrect_source_states":  0,
+                                               "integrity":  "ok",
+                                               "passed":  false,
+                                               "payments":  168,
+                                               "scope":  "Complete-lifecycle expectations; interrupted requests can leave valid partial state",
+                                               "source_states":  336,
+                                               "stale_rows":  164
+                                           },
+                        "restart_lookup_passed":  true,
+                        "database_path":  "C:\\Users\\local-user\\rust\\hello_cargo\\target\\perf\\events\\20261110-181740-d8f7a3b9-case-3.sqlite3",
+                        "storage":  {
+                                        "final_db_wal_shm_bytes":  4443640,
+                                        "initial_bytes":  65736,
+                                        "peak_db_wal_shm_bytes":  4443640,
+                                        "main_db_bytes":  286720
+                                    },
+                        "resources":  {
+                                          "peak_sampled_server_working_set_bytes":  9764864,
+                                          "server_cpu_seconds":  0.59375,
+                                          "sampling_ms":  50
+                                      }
+                    },
+                    {
+                        "admission_seconds":  30,
+                        "all_attempt_latency":  {
+                                                    "count":  18951,
+                                                    "max_ms":  308.1595,
+                                                    "mean_ms":  14.071930816315778,
+                                                    "p50_ms":  9.2551,
+                                                    "p95_ms":  44.170899999999996,
+                                                    "p99_ms":  68.3313
+                                                },
+                        "applied_updates":  9366,
+                        "applied_updates_per_second":  300.8378768493074,
+                        "completed_payments":  3122,
+                        "concurrency":  16,
+                        "correctness_passed":  true,
+                        "drain_seconds":  1.1330478,
+                        "duplicate_receipts":  3122,
+                        "elapsed_seconds_including_drain":  31.1330478,
+                        "errors":  [
+
+                                   ],
+                        "event_stage_latency":  {
+                                                    "Applied.event_begin":  {
+                                                                                "count":  9366,
+                                                                                "max_ms":  0.2774,
+                                                                                "mean_ms":  0.03115983344010256,
+                                                                                "p50_ms":  0.0267,
+                                                                                "p95_ms":  0.0602,
+                                                                                "p99_ms":  0.0975
+                                                                            },
+                                                    "Applied.event_commit":  {
+                                                                                 "count":  9366,
+                                                                                 "max_ms":  94.1921,
+                                                                                 "mean_ms":  1.6097111787315808,
+                                                                                 "p50_ms":  0.7841,
+                                                                                 "p95_ms":  7.0236,
+                                                                                 "p99_ms":  10.2793
+                                                                             },
+                                                    "Applied.event_dispatch":  {
+                                                                                   "count":  9366,
+                                                                                   "max_ms":  0.5366,
+                                                                                   "mean_ms":  0.021535532778133675,
+                                                                                   "p50_ms":  0.0148,
+                                                                                   "p95_ms":  0.0554,
+                                                                                   "p99_ms":  0.1344
+                                                                               },
+                                                    "Applied.event_encode":  {
+                                                                                 "count":  9366,
+                                                                                 "max_ms":  0.0917,
+                                                                                 "mean_ms":  0.005927268844757609,
+                                                                                 "p50_ms":  0.0051,
+                                                                                 "p95_ms":  0.0106,
+                                                                                 "p99_ms":  0.019
+                                                                             },
+                                                    "Applied.event_prepare":  {
+                                                                                  "count":  9366,
+                                                                                  "max_ms":  0.1505,
+                                                                                  "mean_ms":  0.0032602818705957416,
+                                                                                  "p50_ms":  0.0027,
+                                                                                  "p95_ms":  0.0056,
+                                                                                  "p99_ms":  0.0116
+                                                                              },
+                                                    "Applied.event_queue":  {
+                                                                                "count":  9366,
+                                                                                "max_ms":  265.694,
+                                                                                "mean_ms":  4.844506779841981,
+                                                                                "p50_ms":  1.1382,
+                                                                                "p95_ms":  29.4412,
+                                                                                "p99_ms":  48.1256
+                                                                            },
+                                                    "Applied.event_service":  {
+                                                                                  "count":  9366,
+                                                                                  "max_ms":  94.3562,
+                                                                                  "mean_ms":  1.7874606769165031,
+                                                                                  "p50_ms":  0.9588,
+                                                                                  "p95_ms":  7.2926,
+                                                                                  "p99_ms":  10.4731
+                                                                              },
+                                                    "Applied.event_work":  {
+                                                                               "count":  9366,
+                                                                               "max_ms":  0.7415,
+                                                                               "mean_ms":  0.13534983984625198,
+                                                                               "p50_ms":  0.1297,
+                                                                               "p95_ms":  0.2013,
+                                                                               "p99_ms":  0.2776
+                                                                           },
+                                                    "Duplicate.event_begin":  {
+                                                                                  "count":  3122,
+                                                                                  "max_ms":  0.3046,
+                                                                                  "mean_ms":  0.03150711082639333,
+                                                                                  "p50_ms":  0.0269,
+                                                                                  "p95_ms":  0.061,
+                                                                                  "p99_ms":  0.1033
+                                                                              },
+                                                    "Duplicate.event_commit":  {
+                                                                                   "count":  3122,
+                                                                                   "max_ms":  0.0756,
+                                                                                   "mean_ms":  0.00883215887251757,
+                                                                                   "p50_ms":  0.0085,
+                                                                                   "p95_ms":  0.0134,
+                                                                                   "p99_ms":  0.024
+                                                                               },
+                                                    "Duplicate.event_dispatch":  {
+                                                                                     "count":  3122,
+                                                                                     "max_ms":  0.542,
+                                                                                     "mean_ms":  0.022030941704035887,
+                                                                                     "p50_ms":  0.0149,
+                                                                                     "p95_ms":  0.0557,
+                                                                                     "p99_ms":  0.1517
+                                                                                 },
+                                                    "Duplicate.event_encode":  {
+                                                                                   "count":  3122,
+                                                                                   "max_ms":  0.0629,
+                                                                                   "mean_ms":  0.004627802690582949,
+                                                                                   "p50_ms":  0.0043,
+                                                                                   "p95_ms":  0.0071,
+                                                                                   "p99_ms":  0.0159
+                                                                               },
+                                                    "Duplicate.event_prepare":  {
+                                                                                    "count":  3122,
+                                                                                    "max_ms":  0.0728,
+                                                                                    "mean_ms":  0.00324884689301729,
+                                                                                    "p50_ms":  0.0027,
+                                                                                    "p95_ms":  0.0056,
+                                                                                    "p99_ms":  0.0098
+                                                                                },
+                                                    "Duplicate.event_queue":  {
+                                                                                  "count":  3122,
+                                                                                  "max_ms":  198.7466,
+                                                                                  "mean_ms":  4.565442344650864,
+                                                                                  "p50_ms":  0.9949,
+                                                                                  "p95_ms":  28.0897,
+                                                                                  "p99_ms":  49.8425
+                                                                              },
+                                                    "Duplicate.event_service":  {
+                                                                                    "count":  3122,
+                                                                                    "max_ms":  0.4516,
+                                                                                    "mean_ms":  0.11624080717488783,
+                                                                                    "p50_ms":  0.1072,
+                                                                                    "p95_ms":  0.1917,
+                                                                                    "p99_ms":  0.2815
+                                                                                },
+                                                    "Duplicate.event_work":  {
+                                                                                 "count":  3122,
+                                                                                 "max_ms":  0.3802,
+                                                                                 "mean_ms":  0.06568526585522096,
+                                                                                 "p50_ms":  0.0596,
+                                                                                 "p95_ms":  0.1092,
+                                                                                 "p99_ms":  0.1683
+                                                                             },
+                                                    "Read.event_begin":  {
+                                                                             "count":  3122,
+                                                                             "max_ms":  0.4251,
+                                                                             "mean_ms":  0.007024983984625256,
+                                                                             "p50_ms":  0.0053,
+                                                                             "p95_ms":  0.0153,
+                                                                             "p99_ms":  0.0249
+                                                                         },
+                                                    "Read.event_commit":  {
+                                                                              "count":  3122,
+                                                                              "max_ms":  0.0694,
+                                                                              "mean_ms":  0.0061546764894298235,
+                                                                              "p50_ms":  0.0059,
+                                                                              "p95_ms":  0.0097,
+                                                                              "p99_ms":  0.016
+                                                                          },
+                                                    "Read.event_dispatch":  {
+                                                                                "count":  3122,
+                                                                                "max_ms":  0.5051,
+                                                                                "mean_ms":  0.022336098654708526,
+                                                                                "p50_ms":  0.0153,
+                                                                                "p95_ms":  0.0565,
+                                                                                "p99_ms":  0.14
+                                                                            },
+                                                    "Read.event_encode":  {
+                                                                              "count":  3122,
+                                                                              "max_ms":  0.1644,
+                                                                              "mean_ms":  0.004806918641896215,
+                                                                              "p50_ms":  0.0043,
+                                                                              "p95_ms":  0.0085,
+                                                                              "p99_ms":  0.0167
+                                                                          },
+                                                    "Read.event_prepare":  {
+                                                                               "count":  3122,
+                                                                               "max_ms":  0.0234,
+                                                                               "mean_ms":  0.0003751441383728316,
+                                                                               "p50_ms":  0.0003,
+                                                                               "p95_ms":  0.0007,
+                                                                               "p99_ms":  0.001
+                                                                           },
+                                                    "Read.event_queue":  {
+                                                                             "count":  3122,
+                                                                             "max_ms":  265.6521,
+                                                                             "mean_ms":  5.016225592568869,
+                                                                             "p50_ms":  1.3553,
+                                                                             "p95_ms":  28.3052,
+                                                                             "p99_ms":  44.4693
+                                                                         },
+                                                    "Read.event_service":  {
+                                                                               "count":  3122,
+                                                                               "max_ms":  0.616,
+                                                                               "mean_ms":  0.09331860986547073,
+                                                                               "p50_ms":  0.0846,
+                                                                               "p95_ms":  0.1606,
+                                                                               "p99_ms":  0.2384
+                                                                           },
+                                                    "Read.event_work":  {
+                                                                            "count":  3122,
+                                                                            "max_ms":  0.3765,
+                                                                            "mean_ms":  0.07817081998718754,
+                                                                            "p50_ms":  0.0702,
+                                                                            "p95_ms":  0.1369,
+                                                                            "p99_ms":  0.2046
+                                                                        },
+                                                    "Stale.event_begin":  {
+                                                                              "count":  3122,
+                                                                              "max_ms":  0.2759,
+                                                                              "mean_ms":  0.03131704035874435,
+                                                                              "p50_ms":  0.0266,
+                                                                              "p95_ms":  0.0606,
+                                                                              "p99_ms":  0.0992
+                                                                          },
+                                                    "Stale.event_commit":  {
+                                                                               "count":  3122,
+                                                                               "max_ms":  131.4351,
+                                                                               "mean_ms":  1.6313073350416396,
+                                                                               "p50_ms":  0.7395,
+                                                                               "p95_ms":  7.0537,
+                                                                               "p99_ms":  13.4043
+                                                                           },
+                                                    "Stale.event_dispatch":  {
+                                                                                 "count":  3122,
+                                                                                 "max_ms":  0.4031,
+                                                                                 "mean_ms":  0.021799327354260076,
+                                                                                 "p50_ms":  0.0148,
+                                                                                 "p95_ms":  0.0605,
+                                                                                 "p99_ms":  0.1272
+                                                                             },
+                                                    "Stale.event_encode":  {
+                                                                               "count":  3122,
+                                                                               "max_ms":  0.0811,
+                                                                               "mean_ms":  0.005968673926969883,
+                                                                               "p50_ms":  0.0051,
+                                                                               "p95_ms":  0.0113,
+                                                                               "p99_ms":  0.0184
+                                                                           },
+                                                    "Stale.event_prepare":  {
+                                                                                "count":  3122,
+                                                                                "max_ms":  0.0647,
+                                                                                "mean_ms":  0.0031814221652786646,
+                                                                                "p50_ms":  0.0027,
+                                                                                "p95_ms":  0.0056,
+                                                                                "p99_ms":  0.0107
+                                                                            },
+                                                    "Stale.event_queue":  {
+                                                                              "count":  3122,
+                                                                              "max_ms":  265.1148,
+                                                                              "mean_ms":  4.666568289557974,
+                                                                              "p50_ms":  1.2307,
+                                                                              "p95_ms":  24.6652,
+                                                                              "p99_ms":  52.865
+                                                                          },
+                                                    "Stale.event_service":  {
+                                                                                "count":  3122,
+                                                                                "max_ms":  131.5511,
+                                                                                "mean_ms":  1.762226969891093,
+                                                                                "p50_ms":  0.8677,
+                                                                                "p95_ms":  7.2513,
+                                                                                "p99_ms":  13.6875
+                                                                            },
+                                                    "Stale.event_work":  {
+                                                                             "count":  3122,
+                                                                             "max_ms":  0.4484,
+                                                                             "mean_ms":  0.08817853939782191,
+                                                                             "p50_ms":  0.0823,
+                                                                             "p95_ms":  0.1385,
+                                                                             "p99_ms":  0.2
+                                                                         }
+                                                },
+                        "http_status_counts":  {
+                                                   "200":  18732,
+                                                   "503":  219
+                                               },
+                        "load_model":  "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+                        "logical_post_latency_including_retries":  {
+                                                                       "count":  15610,
+                                                                       "max_ms":  5106.2264,
+                                                                       "mean_ms":  25.685330506085794,
+                                                                       "p50_ms":  9.305900000000001,
+                                                                       "p95_ms":  47.505199999999995,
+                                                                       "p99_ms":  241.4599
+                                                                   },
+                        "process_scheduling_gaps":  [
+
+                                                    ],
+                        "rejection_codes":  {
+                                                "busy":  219
+                                            },
+                        "run_id":  "3370dd610fda4e04805415d6a22a7210",
+                        "sample_payment_id":  "LOAD-3370dd610fda4e04805415d6a22a7210-15-0",
+                        "schema_version":  4,
+                        "stale_receipts":  3122,
+                        "status_read_latency_including_retries":  {
+                                                                      "count":  3122,
+                                                                      "max_ms":  3087.2099,
+                                                                      "mean_ms":  27.409103299167214,
+                                                                      "p50_ms":  9.3692,
+                                                                      "p95_ms":  44.1378,
+                                                                      "p99_ms":  1014.4082999999999
+                                                                  },
+                        "successful_post_attempt_latency":  {
+                                                                "count":  15610,
+                                                                "max_ms":  308.1595,
+                                                                "mean_ms":  14.144480217809079,
+                                                                "p50_ms":  9.275500000000001,
+                                                                "p95_ms":  44.9901,
+                                                                "p99_ms":  70.75720000000001
+                                                            },
+                        "successful_post_latency_by_outcome":  {
+                                                                   "Applied":  {
+                                                                                   "count":  9366,
+                                                                                   "max_ms":  296.6451,
+                                                                                   "mean_ms":  14.572268577834661,
+                                                                                   "p50_ms":  9.440000000000001,
+                                                                                   "p95_ms":  47.177299999999995,
+                                                                                   "p99_ms":  70.6341
+                                                                               },
+                                                                   "Duplicate":  {
+                                                                                     "count":  3122,
+                                                                                     "max_ms":  210.77450000000002,
+                                                                                     "mean_ms":  12.618049455477248,
+                                                                                     "p50_ms":  8.4472,
+                                                                                     "p95_ms":  38.0662,
+                                                                                     "p99_ms":  66.54740000000001
+                                                                                 },
+                                                                   "Stale":  {
+                                                                                 "count":  3122,
+                                                                                 "max_ms":  308.1595,
+                                                                                 "mean_ms":  14.387545900064072,
+                                                                                 "p50_ms":  9.4295,
+                                                                                 "p95_ms":  42.2552,
+                                                                                 "p99_ms":  74.6232
+                                                                             }
+                                                               },
+                        "unique_committed_events":  12488,
+                        "unique_committed_events_per_second":  401.11716913240986,
+                        "workload":  "five event posts and one status read per payment",
+                        "load_client_exit_code":  0,
+                        "validation_passed":  true,
+                        "profile":  "capacity",
+                        "rate_limit":  10000,
+                        "event_queue_capacity":  32,
+                        "database_audit":  {
+                                               "applied_rows":  9366,
+                                               "event_log_rows":  12488,
+                                               "expected_completed_payments":  3122,
+                                               "expected_run_id":  "3370dd610fda4e04805415d6a22a7210",
+                                               "foreign_workload_payments":  0,
+                                               "incorrect_source_states":  0,
+                                               "integrity":  "ok",
+                                               "passed":  true,
+                                               "payments":  3122,
+                                               "scope":  "Complete-lifecycle expectations; interrupted requests can leave valid partial state",
+                                               "source_states":  6244,
+                                               "stale_rows":  3122
+                                           },
+                        "restart_lookup_passed":  true,
+                        "database_path":  "C:\\Users\\local-user\\rust\\hello_cargo\\target\\perf\\events\\20261110-181740-d8f7a3b9-case-4.sqlite3",
+                        "storage":  {
+                                        "final_db_wal_shm_bytes":  10903272,
+                                        "initial_bytes":  65736,
+                                        "peak_db_wal_shm_bytes":  10903272,
+                                        "main_db_bytes":  6705152
+                                    },
+                        "resources":  {
+                                          "peak_sampled_server_working_set_bytes":  13475840,
+                                          "server_cpu_seconds":  15.796875,
+                                          "sampling_ms":  50
+                                      }
+                    }
+                ],
+    "logical_processors":  24,
+    "generated_at":  "2026-11-10T18:18:29.2755471Z",
+    "scope":  "Local loopback, client and API on same host; fresh SQLite WAL/FULL database per case; no warmup events; closed-loop mixed lifecycle, not an open-loop arrival test",
+    "all_cases_passed":  false
+}

@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: ..
+    environment:
+      RECONCILE_BIND: 0.0.0.0:3000
+      RECONCILE_API_KEY: ${RECONCILE_API_KEY:?Set a random token of at least 32 characters}
+      RECONCILE_CONCURRENCY: 8
+      RECONCILE_TIMEOUT_MS: 10000
+      RECONCILE_DB_PATH: /var/lib/reconcile/events.sqlite3
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - reconciliation-state:/var/lib/reconcile
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 2
+    pids_limit: 128
+    restart: unless-stopped
+volumes:
+  reconciliation-state:

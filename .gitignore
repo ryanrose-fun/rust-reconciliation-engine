@@ -1,0 +1,12 @@
+/target
+/dist
+.env
+*.log
+/report.json
+/second-report.json
+/perf/target/
+
+/state/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm

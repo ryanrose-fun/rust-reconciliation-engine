@@ -1,0 +1,27 @@
+[package]
+default-run = "hello_cargo"
+name = "hello_cargo"
+version = "0.2.0"
+license = "MIT"
+description = "Snapshot payment reconciliation library, CLI, and HTTP service"
+readme = "README.md"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+axum = "0.8"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time", "io-util"] }
+
+utoipa = "5"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+sha2 = "0.10"
+subtle = "2"
+http-body-util = "0.1"
+mime = "0.3"
+rusqlite = { version = "0.41", features = ["bundled"] }
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+jsonschema = { version = "0.33", default-features = false }

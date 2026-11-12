@@ -1,0 +1,101 @@
+{
+  "admission_seconds": 15,
+  "all_attempt_latency": {
+    "count": 1355,
+    "max_ms": 10023.5821,
+    "mean_ms": 27.421728339483384,
+    "p50_ms": 11.2278,
+    "p95_ms": 21.5193,
+    "p99_ms": 35.4771
+  },
+  "applied_updates": 597,
+  "applied_updates_per_second": 27.410691582033365,
+  "completed_payments": 192,
+  "concurrency": 16,
+  "correctness_passed": false,
+  "drain_seconds": 6.779822599999999,
+  "duplicate_receipts": 198,
+  "elapsed_seconds_including_drain": 21.7798226,
+  "errors": [
+    "transport: error sending request",
+    "transport: error sending request",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted",
+    "retry budget exhausted"
+  ],
+  "event_stage_latency": {},
+  "http_status_counts": {
+    "0": 2,
+    "200": 1180,
+    "503": 173
+  },
+  "load_model": "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+  "logical_post_latency_including_retries": {
+    "count": 988,
+    "max_ms": 11536.759999999998,
+    "mean_ms": 168.70503633603238,
+    "p50_ms": 11.9513,
+    "p95_ms": 1024.8033,
+    "p99_ms": 3070.9961
+  },
+  "rejection_codes": {
+    "busy": 4,
+    "storage_busy": 169
+  },
+  "sample_payment_id": "LOAD-183c264cbc5941bc9efd9707ed2b579a-7-0",
+  "schema_version": 2,
+  "stale_receipts": 193,
+  "status_read_latency_including_retries": {
+    "count": 192,
+    "max_ms": 11496.5288,
+    "mean_ms": 126.64994322916668,
+    "p50_ms": 8.3912,
+    "p95_ms": 1016.4141,
+    "p99_ms": 2038.3947
+  },
+  "successful_post_attempt_latency": {
+    "count": 988,
+    "max_ms": 81.2398,
+    "mean_ms": 13.077909008097162,
+    "p50_ms": 11.625399999999999,
+    "p95_ms": 20.674999999999997,
+    "p99_ms": 30.0565
+  },
+  "successful_post_latency_by_outcome": {
+    "Applied": {
+      "count": 597,
+      "max_ms": 81.2398,
+      "mean_ms": 13.716299497487435,
+      "p50_ms": 12.0248,
+      "p95_ms": 21.6729,
+      "p99_ms": 36.3875
+    },
+    "Duplicate": {
+      "count": 198,
+      "max_ms": 30.7565,
+      "mean_ms": 11.13611919191919,
+      "p50_ms": 10.6701,
+      "p95_ms": 14.9228,
+      "p99_ms": 26.2838
+    },
+    "Stale": {
+      "count": 193,
+      "max_ms": 30.0565,
+      "mean_ms": 13.09529378238342,
+      "p50_ms": 11.952,
+      "p95_ms": 20.5404,
+      "p99_ms": 27.7697
+    }
+  },
+  "unique_committed_events": 790,
+  "unique_committed_events_per_second": 36.272104438536616,
+  "workload": "five event posts and one status read per payment"
+}

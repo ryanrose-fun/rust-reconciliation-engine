@@ -1,0 +1,22 @@
+name: Release candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.99.1 --profile minimal --component rustfmt
+      - run: rustup default 1.99.1
+      - run: cargo test --locked
+      - shell: pwsh
+        run: ./scripts/package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-candidate
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error

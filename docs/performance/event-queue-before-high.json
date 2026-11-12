@@ -1,0 +1,248 @@
+{
+    "api_sha256":  "B2D0625745970747E7E95B2E30658F64A2989016D590E428196D2B48A094C022",
+    "client_sha256":  "2A70E107C1005F72AF3E8E22EDE50264666C8401BECBEF04CFABCE4060D5EA4F",
+    "cpu":  "Intel(R) Core(TM) i7-14650HX",
+    "api_binary":  "target/perf-api/baselines/event-api-before-queue.exe",
+    "results":  [
+                    {
+                        "admission_seconds":  15,
+                        "all_attempt_latency":  {
+                                                    "count":  2409,
+                                                    "max_ms":  155.0889,
+                                                    "mean_ms":  10.704597675383965,
+                                                    "p50_ms":  10.4598,
+                                                    "p95_ms":  13.9381,
+                                                    "p99_ms":  17.414700000000003
+                                                },
+                        "applied_updates":  1092,
+                        "applied_updates_per_second":  61.910500207927434,
+                        "completed_payments":  364,
+                        "concurrency":  16,
+                        "correctness_passed":  true,
+                        "drain_seconds":  2.6383650000000003,
+                        "duplicate_receipts":  364,
+                        "elapsed_seconds_including_drain":  17.638365,
+                        "errors":  [
+
+                                   ],
+                        "event_stage_latency":  {
+
+                                                },
+                        "http_status_counts":  {
+                                                   "200":  2184,
+                                                   "503":  225
+                                               },
+                        "load_model":  "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+                        "logical_post_latency_including_retries":  {
+                                                                       "count":  1820,
+                                                                       "max_ms":  10147.3691,
+                                                                       "mean_ms":  128.68609324175833,
+                                                                       "p50_ms":  11.014299999999999,
+                                                                       "p95_ms":  1022.3339,
+                                                                       "p99_ms":  2041.7052999999999
+                                                                   },
+                        "rejection_codes":  {
+                                                "storage_busy":  225
+                                            },
+                        "sample_payment_id":  "LOAD-7837b062b4a9483c804f2d4c87dade66-8-0",
+                        "schema_version":  2,
+                        "stale_receipts":  364,
+                        "status_read_latency_including_retries":  {
+                                                                      "count":  364,
+                                                                      "max_ms":  1031.0597,
+                                                                      "mean_ms":  47.43847554945055,
+                                                                      "p50_ms":  8.4375,
+                                                                      "p95_ms":  13.8219,
+                                                                      "p99_ms":  1019.7746999999999
+                                                                  },
+                        "successful_post_attempt_latency":  {
+                                                                "count":  1820,
+                                                                "max_ms":  155.0889,
+                                                                "mean_ms":  11.198048131868132,
+                                                                "p50_ms":  10.8289,
+                                                                "p95_ms":  14.043099999999999,
+                                                                "p99_ms":  16.460099999999997
+                                                            },
+                        "successful_post_latency_by_outcome":  {
+                                                                   "Applied":  {
+                                                                                   "count":  1092,
+                                                                                   "max_ms":  137.37720000000002,
+                                                                                   "mean_ms":  11.34824221611723,
+                                                                                   "p50_ms":  10.976700000000001,
+                                                                                   "p95_ms":  14.341899999999999,
+                                                                                   "p99_ms":  16.460099999999997
+                                                                               },
+                                                                   "Duplicate":  {
+                                                                                     "count":  364,
+                                                                                     "max_ms":  18.5361,
+                                                                                     "mean_ms":  10.300618406593411,
+                                                                                     "p50_ms":  10.0663,
+                                                                                     "p95_ms":  13.058300000000001,
+                                                                                     "p99_ms":  14.8657
+                                                                                 },
+                                                                   "Stale":  {
+                                                                                 "count":  364,
+                                                                                 "max_ms":  155.0889,
+                                                                                 "mean_ms":  11.64489560439561,
+                                                                                 "p50_ms":  11.0249,
+                                                                                 "p95_ms":  13.9346,
+                                                                                 "p99_ms":  19.0654
+                                                                             }
+                                                               },
+                        "unique_committed_events":  1456,
+                        "unique_committed_events_per_second":  82.54733361056991,
+                        "workload":  "five event posts and one status read per payment",
+                        "load_client_exit_code":  0,
+                        "validation_passed":  true,
+                        "profile":  "capacity",
+                        "rate_limit":  10000,
+                        "event_queue_capacity":  32,
+                        "database_audit":  {
+                                               "applied_rows":  1092,
+                                               "event_log_rows":  1456,
+                                               "incorrect_source_states":  0,
+                                               "integrity":  "ok",
+                                               "passed":  true,
+                                               "payments":  364,
+                                               "source_states":  728,
+                                               "stale_rows":  364
+                                           },
+                        "restart_lookup_passed":  true,
+                        "database_path":  "C:\\Users\\local-user\\rust\\hello_cargo\\target\\perf\\events\\20261110-174255-76221f86-case-4.sqlite3",
+                        "storage":  {
+                                        "final_db_wal_shm_bytes":  4906584,
+                                        "initial_bytes":  65736,
+                                        "peak_db_wal_shm_bytes":  4906584,
+                                        "main_db_bytes":  733184
+                                    },
+                        "resources":  {
+                                          "peak_sampled_server_working_set_bytes":  11419648,
+                                          "server_cpu_seconds":  1.8125,
+                                          "sampling_ms":  50
+                                      }
+                    },
+                    {
+                        "admission_seconds":  15,
+                        "all_attempt_latency":  {
+                                                    "count":  1405,
+                                                    "max_ms":  66.35919999999999,
+                                                    "mean_ms":  11.175385195729543,
+                                                    "p50_ms":  10.5373,
+                                                    "p95_ms":  17.077599999999997,
+                                                    "p99_ms":  27.2371
+                                                },
+                        "applied_updates":  648,
+                        "applied_updates_per_second":  40.583153359365085,
+                        "completed_payments":  216,
+                        "concurrency":  8,
+                        "correctness_passed":  true,
+                        "drain_seconds":  0.9672166000000004,
+                        "duplicate_receipts":  216,
+                        "elapsed_seconds_including_drain":  15.9672166,
+                        "errors":  [
+
+                                   ],
+                        "event_stage_latency":  {
+
+                                                },
+                        "http_status_counts":  {
+                                                   "200":  1296,
+                                                   "429":  23,
+                                                   "503":  86
+                                               },
+                        "load_model":  "closed loop; sequential lifecycle per worker; retry 429/503 using Retry-After; 10s retry budget",
+                        "logical_post_latency_including_retries":  {
+                                                                       "count":  1080,
+                                                                       "max_ms":  5094.79,
+                                                                       "mean_ms":  100.92092925925927,
+                                                                       "p50_ms":  11.0419,
+                                                                       "p95_ms":  1021.6501,
+                                                                       "p99_ms":  2039.4316
+                                                                   },
+                        "rejection_codes":  {
+                                                "rate_limited":  23,
+                                                "storage_busy":  86
+                                            },
+                        "sample_payment_id":  "LOAD-9a5fb8e9957b4a5eb51246c63ab15314-7-0",
+                        "schema_version":  2,
+                        "stale_receipts":  216,
+                        "status_read_latency_including_retries":  {
+                                                                      "count":  216,
+                                                                      "max_ms":  3058.8445,
+                                                                      "mean_ms":  74.3304263888889,
+                                                                      "p50_ms":  8.3351,
+                                                                      "p95_ms":  21.7099,
+                                                                      "p99_ms":  2029.1583000000003
+                                                                  },
+                        "successful_post_attempt_latency":  {
+                                                                "count":  1080,
+                                                                "max_ms":  66.35919999999999,
+                                                                "mean_ms":  11.739436481481473,
+                                                                "p50_ms":  10.8973,
+                                                                "p95_ms":  17.604499999999998,
+                                                                "p99_ms":  28.355800000000002
+                                                            },
+                        "successful_post_latency_by_outcome":  {
+                                                                   "Applied":  {
+                                                                                   "count":  648,
+                                                                                   "max_ms":  66.35919999999999,
+                                                                                   "mean_ms":  11.915102314814813,
+                                                                                   "p50_ms":  11.0749,
+                                                                                   "p95_ms":  17.686,
+                                                                                   "p99_ms":  27.084699999999998
+                                                                               },
+                                                                   "Duplicate":  {
+                                                                                     "count":  216,
+                                                                                     "max_ms":  37.1377,
+                                                                                     "mean_ms":  11.029824537037033,
+                                                                                     "p50_ms":  10.0897,
+                                                                                     "p95_ms":  17.929000000000002,
+                                                                                     "p99_ms":  29.5984
+                                                                                 },
+                                                                   "Stale":  {
+                                                                                 "count":  216,
+                                                                                 "max_ms":  40.741,
+                                                                                 "mean_ms":  11.922050925925927,
+                                                                                 "p50_ms":  11.0717,
+                                                                                 "p95_ms":  17.604499999999998,
+                                                                                 "p99_ms":  30.7364
+                                                                             }
+                                                               },
+                        "unique_committed_events":  864,
+                        "unique_committed_events_per_second":  54.11087114582011,
+                        "workload":  "five event posts and one status read per payment",
+                        "load_client_exit_code":  0,
+                        "validation_passed":  true,
+                        "profile":  "default-rate",
+                        "rate_limit":  100,
+                        "event_queue_capacity":  32,
+                        "database_audit":  {
+                                               "applied_rows":  648,
+                                               "event_log_rows":  864,
+                                               "incorrect_source_states":  0,
+                                               "integrity":  "ok",
+                                               "passed":  true,
+                                               "payments":  216,
+                                               "source_states":  432,
+                                               "stale_rows":  216
+                                           },
+                        "restart_lookup_passed":  true,
+                        "database_path":  "C:\\Users\\local-user\\rust\\hello_cargo\\target\\perf\\events\\20261110-174255-76221f86-case-5.sqlite3",
+                        "storage":  {
+                                        "final_db_wal_shm_bytes":  4570736,
+                                        "initial_bytes":  65736,
+                                        "peak_db_wal_shm_bytes":  4570736,
+                                        "main_db_bytes":  393216
+                                    },
+                        "resources":  {
+                                          "peak_sampled_server_working_set_bytes":  10182656,
+                                          "server_cpu_seconds":  1.546875,
+                                          "sampling_ms":  50
+                                      }
+                    }
+                ],
+    "logical_processors":  24,
+    "generated_at":  "2026-11-10T17:43:33.7133633Z",
+    "scope":  "Local loopback, client and API on same host; fresh SQLite WAL/FULL database per case; no warmup events; closed-loop mixed lifecycle, not an open-loop arrival test",
+    "all_cases_passed":  true
+}

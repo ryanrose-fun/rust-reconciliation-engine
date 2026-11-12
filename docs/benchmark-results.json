@@ -1,0 +1,155 @@
+{
+  "arch": "x86_64",
+  "engine_version": "0.2.0",
+  "excludes": [
+    "dataset generation",
+    "input JSON parsing",
+    "output JSON encoding",
+    "network",
+    "disk",
+    "report destruction"
+  ],
+  "generated_at": "2026-11-10T13:00:03.834215800+00:00",
+  "logical_parallelism": 24,
+  "os": "windows",
+  "profile": "release required",
+  "results": [
+    {
+      "input_records_per_second": 3637598.2151518096,
+      "mean_ms": 0.5498133333333333,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 0.5386,
+      "p95_ms": 0.6105,
+      "payments_per_source": 1000,
+      "samples": 30,
+      "scenario": "matched",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 3468167.998057825,
+      "mean_ms": 0.5766733333333335,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 0.5816,
+      "p95_ms": 0.6568999999999999,
+      "payments_per_source": 1000,
+      "samples": 30,
+      "scenario": "mixed",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 1367452.8000875171,
+      "mean_ms": 1.462573333333333,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 1.4311,
+      "p95_ms": 1.6175,
+      "payments_per_source": 1000,
+      "samples": 30,
+      "scenario": "long_ids",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 25613346.41805692,
+      "mean_ms": 0.07812333333333334,
+      "operation": "validate_and_reject",
+      "p50_ms": 0.0713,
+      "p95_ms": 0.0988,
+      "payments_per_source": 1000,
+      "samples": 30,
+      "scenario": "duplicates",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 3775655.579663815,
+      "mean_ms": 5.2970933333333345,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 5.2941,
+      "p95_ms": 5.566800000000001,
+      "payments_per_source": 10000,
+      "samples": 30,
+      "scenario": "matched",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 3944731.6793511715,
+      "mean_ms": 5.070053333333332,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 5.0920000000000005,
+      "p95_ms": 5.3018,
+      "payments_per_source": 10000,
+      "samples": 30,
+      "scenario": "mixed",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 1217079.2734442428,
+      "mean_ms": 16.432783333333337,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 16.2639,
+      "p95_ms": 17.7199,
+      "payments_per_source": 10000,
+      "samples": 30,
+      "scenario": "long_ids",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 30767771.34535609,
+      "mean_ms": 0.6500633333333333,
+      "operation": "validate_and_reject",
+      "p50_ms": 0.6185999999999999,
+      "p95_ms": 0.7749,
+      "payments_per_source": 10000,
+      "samples": 30,
+      "scenario": "duplicates",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 3495008.1381264497,
+      "mean_ms": 57.22447333333333,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 56.9349,
+      "p95_ms": 62.0643,
+      "payments_per_source": 100000,
+      "samples": 30,
+      "scenario": "matched",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 3362317.4436748778,
+      "mean_ms": 59.482783333333344,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 58.5559,
+      "p95_ms": 68.8555,
+      "payments_per_source": 100000,
+      "samples": 30,
+      "scenario": "mixed",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 565239.6920581694,
+      "mean_ms": 353.83219333333335,
+      "operation": "validate_reconcile_report_and_fingerprint",
+      "p50_ms": 239.0509,
+      "p95_ms": 642.5576,
+      "payments_per_source": 100000,
+      "samples": 30,
+      "scenario": "long_ids",
+      "warmups": 3
+    },
+    {
+      "input_records_per_second": 8090211.3381857285,
+      "mean_ms": 24.721356666666665,
+      "operation": "validate_and_reject",
+      "p50_ms": 22.102,
+      "p95_ms": 37.8287,
+      "payments_per_source": 100000,
+      "samples": 30,
+      "scenario": "duplicates",
+      "warmups": 3
+    }
+  ],
+  "peak_process_working_set_bytes": 134422528,
+  "memory_scope": "Whole benchmark process high-water RSS sampled across all scenarios; includes datasets and allocator retention",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "cpu": "Intel(R) Core(TM) i7-14650HX",
+  "os_description": "Microsoft Windows NT 10.0.26200.0"
+}

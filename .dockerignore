@@ -1,0 +1,10 @@
+.git
+.github
+target
+dist
+.env
+*.log
+report.json
+second-report.json
+state
+**/*.sqlite3*
