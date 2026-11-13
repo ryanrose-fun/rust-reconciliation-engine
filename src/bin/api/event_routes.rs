@@ -4,11 +4,139 @@ use reconcile_cli::events::{EventError, EventReceipt, LivePayment, PaymentEvent}
 
 const MAX_EVENT_BYTES: usize = 16 * 1024;
 
+#[derive(Deserialize, Default)]
+#[serde(default, deny_unknown_fields)]
+pub(super) struct HistoryQuery {
+    after: i64,
+    limit: Option<usize>,
+}
+#[utoipa::path(get,path="/v1/payments/{payment_id}/history",security(("bearerAuth"=[])),
+ params(("payment_id"=String,Path),("after"=Option<i64>,Query),("limit"=Option<usize>,Query)),
+ responses((status=200,description="Append-only timeline and current revision; deadlines evaluated on observation",body=reconcile_cli::events::HistoryPage), (status=401,description="Invalid credentials",body=ErrorEnvelope),(status=404,description="Payment not found",body=ErrorEnvelope),(status=422,description="Invalid cursor",body=ErrorEnvelope)))]
+pub(super) async fn history(
+    State(state): State<AppState>,
+    path: Result<Path<String>, PathRejection>,
+    query: Result<axum::extract::Query<HistoryQuery>, axum::extract::rejection::QueryRejection>,
+) -> Result<Response, ApiError> {
+    let Path(id) = path.map_err(|_| {
+        ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_event",
+            "Invalid payment ID in URL",
+        )
+    })?;
+    let axum::extract::Query(query) = query.map_err(|_| {
+        ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_filter",
+            "Invalid history query",
+        )
+    })?;
+    let store = event_store(&state)?;
+    let (value, stages) = state
+        .event_queue
+        .run(state.workers.clone(), move || {
+            Ok((
+                store
+                    .history(&id, query.after, query.limit.unwrap_or(100))
+                    .map_err(storage_error)?,
+                Default::default(),
+            ))
+        })
+        .await?;
+    no_cache(value, stages)
+}
+#[utoipa::path(post,path="/v1/payments/{payment_id}/investigation",security(("bearerAuth"=[])),
+ params(("payment_id"=String,Path)),request_body=reconcile_cli::events::Investigation,
+ responses((status=200,description="Committed immutable note or acknowledgement",body=reconcile_cli::events::InvestigationReceipt),(status=403,description="Investigator permission required",body=ErrorEnvelope),(status=409,description="Stale revision or reused investigation ID",body=ErrorEnvelope),(status=422,description="Invalid note",body=ErrorEnvelope)))]
+pub(super) async fn investigate(
+    State(state): State<AppState>,
+    path: Result<Path<String>, PathRejection>,
+    request: Request,
+) -> Result<Response, ApiError> {
+    let Path(id) = path.map_err(|_| {
+        ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_event",
+            "Invalid payment ID in URL",
+        )
+    })?;
+    let actor = request
+        .extensions()
+        .get::<crate::permissions::Principal>()
+        .cloned()
+        .unwrap_or_else(crate::permissions::Principal::legacy)
+        .id;
+    let media = request
+        .headers()
+        .get("content-type")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|s| s.parse::<mime::Mime>().ok());
+    if !media.is_some_and(|m| {
+        m.type_() == mime::APPLICATION
+            && (m.subtype() == mime::JSON || m.suffix() == Some(mime::JSON))
+    }) {
+        return Ok(reject_upload(
+            &state,
+            request,
+            ApiError::new(
+                StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                "unsupported_media_type",
+                "Use application/json",
+            ),
+        )
+        .await);
+    }
+    let bytes = axum::body::to_bytes(
+        request.into_body(),
+        MAX_EVENT_BYTES.min(state.config.max_body),
+    )
+    .await
+    .map_err(|error| {
+        use std::error::Error;
+        if error
+            .source()
+            .is_some_and(|e| e.is::<http_body_util::LengthLimitError>())
+        {
+            ApiError::new(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                "request_too_large",
+                "Investigation body exceeds its limit",
+            )
+        } else {
+            ApiError::new(
+                StatusCode::BAD_REQUEST,
+                "invalid_json",
+                "Investigation body could not be read",
+            )
+        }
+    })?;
+    let input = serde_json::from_slice(&bytes).map_err(json_error)?;
+    let store = event_store(&state)?;
+    let (value, stages) = state
+        .event_queue
+        .run(state.workers.clone(), move || {
+            Ok((
+                store
+                    .investigate(&id, &actor, input)
+                    .map_err(storage_error)?,
+                Default::default(),
+            ))
+        })
+        .await?;
+    no_cache(value, stages)
+}
+
 fn storage_error(error: EventError) -> ApiError {
     let (status, code, message) = match error {
         EventError::InvalidInput(message) => {
             (StatusCode::UNPROCESSABLE_ENTITY, "invalid_event", message)
         }
+        EventError::RevisionConflict => (
+            StatusCode::CONFLICT,
+            "revision_conflict",
+            "Reload history: the revision or investigation ID conflicts",
+        ),
         EventError::EventIdConflict => (
             StatusCode::CONFLICT,
             "event_id_conflict",
@@ -92,6 +220,7 @@ fn no_cache(
     responses((status=200,description="Committed event or exact retry; includes current payment state",body=EventReceipt),
     (status=400,description="Malformed JSON",body=ErrorEnvelope),
     (status=401,description="Missing or invalid token",body=ErrorEnvelope),
+    (status=403,description="Credential does not permit this source or operation",body=ErrorEnvelope),
     (status=409,description="Event identity or source-version conflict",body=ErrorEnvelope),
     (status=413,description="Event body exceeds 16 KiB or configured body limit",body=ErrorEnvelope),
     (status=415,description="Unsupported media type",body=ErrorEnvelope),
@@ -124,6 +253,11 @@ pub(super) async fn ingest(
         )
         .await);
     }
+    let principal = request
+        .extensions()
+        .get::<crate::permissions::Principal>()
+        .cloned()
+        .unwrap_or_else(crate::permissions::Principal::legacy);
     let body_started = Instant::now();
     let body = axum::body::to_bytes(
         request.into_body(),
@@ -165,6 +299,13 @@ pub(super) async fn ingest(
                     json_error(error)
                 }
             })?;
+            if !principal.writes_source(event.source) {
+                return Err(ApiError::new(
+                    StatusCode::FORBIDDEN,
+                    "source_forbidden",
+                    "Credential cannot write this source",
+                ));
+            }
             store.apply_profiled(event).map_err(storage_error)
         })
         .await?;

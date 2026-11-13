@@ -139,3 +139,6 @@ Successful responses include Server-Timing durations in milliseconds:
 The same values are recorded as stages in structured request logs. End-to-end client latency also includes transport and response delivery. Do not add server and client timings together. Parsing, reconciliation and encoding run in the bounded worker pool; worker permits remain held until that work ends even if the HTTP deadline expires. Processing-stage timers do not separately account for every cleanup/allocation operation.
 
 The API enables TCP_NODELAY on accepted sockets, using Axum's supported listener hook, so small writes are not intentionally delayed by Nagle's algorithm. The request and report JSON shapes are unchanged.
+## Source permissions and investigation
+
+See [INTEGRATION.md](INTEGRATION.md) for the role matrix, optional Rust client, GET `/v1/payments/{payment_id}/history`, and POST `/v1/payments/{payment_id}/investigation`. Permission failures return 403 (`forbidden` or `source_forbidden`); conflicting investigation IDs or stale revisions return 409 (`revision_conflict`).

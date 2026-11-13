@@ -16,8 +16,12 @@ jobs:
         shell: powershell
         run: .\scripts\test-process-runner.ps1
       - run: cargo +1.99.1 fmt --check
-      - run: cargo +1.99.1 test --locked
-      - run: cargo +1.99.1 clippy --locked --all-targets -- -D warnings
+      - run: cargo +1.99.1 test --locked --all-features
+      - run: cargo +1.99.1 clippy --locked --all-features --all-targets -- -D warnings
+      - name: Scoped checkout/provider lifecycle and timeout recovery
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: .\examples\run-lifecycle.ps1
       - run: cargo +1.99.1 fmt --manifest-path perf/Cargo.toml --check
       - run: cargo +1.99.1 test --locked --manifest-path perf/Cargo.toml
       - run: cargo +1.99.1 clippy --locked --manifest-path perf/Cargo.toml --all-targets -- -D warnings

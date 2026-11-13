@@ -3,6 +3,7 @@ use std::{net::SocketAddr, time::Duration};
 #[derive(Clone)]
 pub struct Config {
     pub bind: SocketAddr,
+    pub scoped_auth: bool,
     pub api_key: Option<String>,
     pub tenant_file: Option<std::path::PathBuf>,
     pub max_body: usize,
@@ -18,6 +19,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             bind: "127.0.0.1:3000".parse().unwrap(),
+            scoped_auth: false,
             api_key: None,
             tenant_file: None,
             max_body: 1_048_576,
