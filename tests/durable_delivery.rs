@@ -21,6 +21,36 @@ use std::{
 };
 type Received = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
 
+#[tokio::test]
+async fn outbox_persists_retry_after_beyond_the_client_deadline() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let app = Router::new().route(
+        "/v1/events",
+        post(|| async {
+            (
+                axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                [("retry-after", "3600")],
+            )
+        }),
+    );
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let db = std::env::temp_dir().join(format!("backoff-{}.sqlite3", uuid::Uuid::new_v4()));
+    let outbox = Arc::new(Outbox::open(&db).unwrap());
+    outbox
+        .enqueue(&event(EventSource::Internal, 1, PaymentStatus::Completed))
+        .unwrap();
+    let client = EventClient::new(&url, "k".repeat(32), RetryPolicy::default()).unwrap();
+    let before = chrono::Utc::now().timestamp_millis();
+    assert!(outbox.deliver_one(&client).await.unwrap());
+    let jobs = outbox.list("").unwrap();
+    assert!(jobs[0].available_at_ms >= before + 3_600_000);
+    assert!(!outbox.deliver_one(&client).await.unwrap());
+    drop(outbox);
+    task.abort();
+    std::fs::remove_file(db).unwrap();
+}
+
 #[test]
 fn business_change_and_enqueue_share_one_commit() {
     let db = std::env::temp_dir().join(format!("atomic-outbox-{}.sqlite3", uuid::Uuid::new_v4()));

@@ -77,7 +77,7 @@ The defaults permit four attempts, five seconds per attempt, and twenty seconds 
 
 All attempts use the same serialized event ID and payload. This gives idempotent application through the server's durable event log, not exactly-once network delivery. On a timeout, an update may already have committed. `DeliveryError` returns `event_id`, `attempts`, and `outcome_unknown`; retain the original event for later retry. Do not generate a replacement ID or assume a timeout means failure. Cancelling the client future can also leave an uncertain outcome.
 
-This small client is not a durable outbox or background worker. A production sender must persist pending events with its business transaction, retry them after restart, and mark completion only after a receipt. The demo persists its synthetic plan before sending to illustrate stable identities. Server receipts for duplicates contain the current payment state, which may have advanced since the original event.
+This small client is not a durable outbox or background worker. A production sender must persist pending events with its business transaction, retry them after restart, and mark completion only after a receipt. The demo persists its synthetic plan before sending to illustrate stable identities. Version 0.4 also provides a [durable outbox and worker](DURABLE-OPERATIONS.md) for restart delivery. Server receipts for duplicates contain the current payment state, which may have advanced since the original event.
 
 ## History, notes, and acknowledgement
 
@@ -94,7 +94,7 @@ Each history entry includes a source-evidence snapshot, recorded and effective t
 
 Events and their history commit in the same transaction. Exact retries and stale updates do not create duplicate transitions. Revisions reflect semantic evidence changes, not merely a higher source version containing identical values. Event identity/version evidence remains in the event log.
 
-Deadline transitions are observed when a payment is accessed by status/history, investigated, or receives another event. They record the waiting deadline as `effective_at_ms` and observation time as `recorded_at_ms`. There is no background scheduler; a general discrepancy scan does not materialize every history transition. Reads may append these automatic observations even for an auditor, but auditors cannot add notes, acknowledgements, or source evidence.
+Deadline transitions are observed when a payment is accessed by status/history, investigated, or receives another event. They record the waiting deadline as `effective_at_ms` and observation time as `recorded_at_ms`. Version 0.4 adds an API background worker that processes indexed due deadlines in bounded batches. Library callers can explicitly call process_deadlines; a general discrepancy scan itself does not materialize every history transition. Reads may append these automatic observations even for an auditor, but auditors cannot add notes, acknowledgements, or source evidence.
 
 An investigator posts to `/v1/payments/{payment_id}/investigation`:
 
@@ -113,6 +113,6 @@ Acknowledgement does not resolve a discrepancy or edit payment evidence. A subse
 
 ## Upgrade and verification
 
-See [migration notes](MIGRATION.md) before opening an existing database: this release introduces schema 2. Back up first. The maintenance backup command preserves schema-1 files without migrating them. API startup performs the transactional migration; older binaries reject schema 2.
+See [migration notes](MIGRATION.md) before opening an existing database: version 0.4 introduces schema 3. Back up first. The maintenance backup command preserves schema-1 files without migrating them. API startup performs the transactional migration; older binaries reject schema 3.
 
 Automated tests cover cross-source rejection, auditor/investigator permissions, actor spoofing, immutable evidence, revision conflicts, pagination, migration, transactional rollback on history failure, and timeout-after-commit retries. CI runs optional client tests on Windows and Linux. The live demo is additional integration evidence, not a load test. Previous throughput results predate history writes and must be remeasured before making capacity claims.

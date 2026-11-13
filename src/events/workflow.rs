@@ -7,6 +7,8 @@ pub(super) fn migrate(tx: &rusqlite::Transaction<'_>) -> Result<(), EventError> 
         CREATE INDEX pending_due ON pending_deadlines(deadline,payment_id);
         INSERT INTO pending_deadlines SELECT p.payment_id,p.waiting_until_ms FROM payments p JOIN source_state s USING(payment_id) GROUP BY p.payment_id HAVING count(*)=1;
         CREATE INDEX case_status ON case_state(status,payment_id);
+        CREATE INDEX active_case_ids ON case_state(payment_id) WHERE opened_at IS NOT NULL;
+        CREATE INDEX history_ack_revision ON payment_history(payment_id,revision,kind);
         CREATE TABLE case_workflow(payment_id TEXT PRIMARY KEY REFERENCES payments(payment_id),owner TEXT,workflow TEXT NOT NULL,version INTEGER NOT NULL);
         CREATE TABLE notification_settings(singleton INTEGER PRIMARY KEY CHECK(singleton=1),endpoint TEXT NOT NULL);
         PRAGMA user_version=3;")?;

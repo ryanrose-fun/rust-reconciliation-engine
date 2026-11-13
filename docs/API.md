@@ -142,3 +142,5 @@ The API enables TCP_NODELAY on accepted sockets, using Axum's supported listener
 ## Source permissions and investigation
 
 See [INTEGRATION.md](INTEGRATION.md) for the role matrix, optional Rust client, GET `/v1/payments/{payment_id}/history`, and POST `/v1/payments/{payment_id}/investigation`. Permission failures return 403 (`forbidden` or `source_forbidden`); conflicting investigation IDs or stale revisions return 409 (`revision_conflict`).
+
+Version 0.4 adds GET `/v1/cases` with owner/workflow/age/acknowledgement filters and POST `/v1/payments/{payment_id}/case` for investigator-only assignment and workflow updates. See [durable operations](DURABLE-OPERATIONS.md) for revision and case-version concurrency checks. The API automatically processes waiting deadlines in bounded batches.

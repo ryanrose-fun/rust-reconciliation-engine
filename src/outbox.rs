@@ -140,10 +140,16 @@ impl Outbox {
         let Some(job) = job else { return Ok(false) };
         let event = serde_json::from_str(&job.payload).map_err(|_| EventError::CorruptData)?;
         let result = client.deliver(&event).await;
-        let permanent = result.as_ref().err().is_some_and(|e| {
-            matches!(e.reason,Failure::Rejected(code) if !matches!(code,429|500|502|503|504))
-                || matches!(e.reason, Failure::InvalidEvent)
-        });
+        let retry_after = result
+            .as_ref()
+            .err()
+            .and_then(|e| e.retry_after_ms)
+            .map(|ms| ms.min(i64::MAX as u64) as i64);
+        let permanent = retry_after.is_some_and(|ms| ms > 86_400_000)
+            || result.as_ref().err().is_some_and(|e| {
+                matches!(e.reason,Failure::Rejected(code) if !matches!(code,429|500|502|503|504))
+                    || matches!(e.reason, Failure::InvalidEvent)
+            });
         let error = result
             .as_ref()
             .err()
@@ -161,7 +167,7 @@ impl Outbox {
                 result.is_ok(),
                 permanent,
                 &error,
-                None,
+                retry_after,
             )
         })
         .await

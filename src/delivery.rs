@@ -7,7 +7,7 @@ pub(crate) const CAPACITY: i64 = 10_000;
 pub(crate) const MAX_ATTEMPTS: i64 = 8;
 pub(crate) fn schema(c: &Connection) -> Result<(), EventError> {
     c.execute_batch("CREATE TABLE delivery_jobs(id TEXT PRIMARY KEY, payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, available_at INTEGER NOT NULL, lease_token TEXT, lease_until INTEGER NOT NULL DEFAULT 0, last_error TEXT, created_at INTEGER NOT NULL, completed_at INTEGER);
-        CREATE INDEX delivery_due ON delivery_jobs(state,available_at,lease_until);")?;
+        CREATE INDEX delivery_due ON delivery_jobs(state,available_at,lease_until); CREATE INDEX delivery_active ON delivery_jobs(state) WHERE state!='delivered';")?;
     Ok(())
 }
 pub(crate) fn enqueue(
@@ -168,6 +168,27 @@ mod tests {
         schema(&c).unwrap();
         c.execute_batch("CREATE TABLE outbox_binding(singleton INTEGER,destination TEXT); INSERT INTO outbox_binding VALUES(1,'target');").unwrap();
         c
+    }
+    #[test]
+    fn active_capacity_is_bounded_but_delivered_receipts_do_not_block_enqueue() {
+        let mut c = queue();
+        c.execute_batch("WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<10000) INSERT INTO delivery_jobs(id,payload,available_at,created_at) SELECT printf('id-%d',x),'{}',0,0 FROM n;").unwrap();
+        {
+            let tx = c.transaction().unwrap();
+            assert!(matches!(
+                enqueue(&tx, "new", "{}", 0),
+                Err(EventError::Busy)
+            ));
+        }
+        c.execute(
+            "UPDATE delivery_jobs SET state='delivered' WHERE id='id-1'",
+            [],
+        )
+        .unwrap();
+        let tx = c.transaction().unwrap();
+        assert!(enqueue(&tx, "new", "{}", 0).unwrap());
+        tx.commit().unwrap();
+        assert_eq!(summary(&c).unwrap().pending, CAPACITY);
     }
     #[test]
     fn expired_leases_are_fenced_and_payload_identity_survives_retry() {

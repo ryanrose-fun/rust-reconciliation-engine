@@ -109,6 +109,7 @@ async fn permanent_errors_do_not_retry_and_retry_after_cannot_exceed_budget() {
         assert_eq!(error.attempts, 1);
         assert_eq!(mock.calls.load(Ordering::SeqCst), 1);
         if status == 503 {
+            assert_eq!(error.retry_after_ms, Some(3_600_000));
             assert!(matches!(error.reason, Failure::Deadline));
             assert!(error.outcome_unknown);
         } else {

@@ -8,6 +8,7 @@ use rusqlite::{OptionalExtension, TransactionBehavior, params};
 use sha2::Sha256;
 use std::{sync::Arc, time::Duration};
 type HmacSha256 = Hmac<Sha256>;
+
 fn mac(secret: &[u8], timestamp: &str, id: &str, body: &[u8]) -> HmacSha256 {
     let mut mac = HmacSha256::new_from_slice(secret).expect("HMAC accepts arbitrary key lengths");
     mac.update(timestamp.as_bytes());
@@ -219,5 +220,59 @@ impl EventStore {
     }
     pub fn redrive_notification(&self, id: &str) -> Result<(), EventError> {
         delivery::redrive(&*self.lock()?, id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn signature_binds_timestamp_identity_and_raw_body() {
+        let signature = mac(&[b's'; 32], "1000000", "event", b"body")
+            .finalize()
+            .into_bytes()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>();
+        assert!(verify_signature(
+            &[b's'; 32],
+            "1000000",
+            "event",
+            b"body",
+            &signature,
+            1000000
+        ));
+        assert!(!verify_signature(
+            &[b'x'; 32],
+            "1000000",
+            "event",
+            b"body",
+            &signature,
+            1000000
+        ));
+        assert!(!verify_signature(
+            &[b's'; 32],
+            "1000000",
+            "other",
+            b"body",
+            &signature,
+            1000000
+        ));
+        assert!(!verify_signature(
+            &[b's'; 32],
+            "1000000",
+            "event",
+            b"tampered",
+            &signature,
+            1000000
+        ));
+        assert!(!verify_signature(
+            &[b's'; 32],
+            "1000000",
+            "event",
+            b"body",
+            &signature,
+            1300001
+        ));
     }
 }
