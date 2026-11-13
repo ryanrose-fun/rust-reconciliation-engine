@@ -11,7 +11,7 @@ use std::{
 use tokio::sync::Semaphore;
 
 #[derive(Clone, Debug, Default, Serialize)]
-pub(super) struct EventStages {
+pub(crate) struct EventStages {
     pub body_ms: f64,
     pub resume_ms: f64,
     pub queue_ms: f64,
@@ -24,6 +24,7 @@ pub(super) struct EventStages {
 /// One active storage operation plus a bounded number of FIFO waiters.
 /// Both reads and writes use this gate because they share one SQLite connection.
 pub(crate) struct EventQueue {
+    capacity: usize,
     slots: Arc<Semaphore>,
     writer: Arc<Semaphore>,
 }
@@ -36,13 +37,29 @@ impl Drop for Cancellation {
 impl EventQueue {
     pub(crate) fn new(waiting_capacity: usize) -> Self {
         Self {
+            capacity: waiting_capacity + 1,
             slots: Arc::new(Semaphore::new(waiting_capacity + 1)),
             writer: Arc::new(Semaphore::new(1)),
         }
     }
+    pub(crate) fn depth(&self) -> (usize, usize) {
+        let active = 1 - self.writer.available_permits();
+        (
+            self.capacity
+                .saturating_sub(self.slots.available_permits())
+                .saturating_sub(active),
+            active,
+        )
+    }
     pub(crate) async fn wait_idle(&self) {
         // Called after HTTP graceful shutdown, when no request can enqueue.
-        let _permit = self.writer.clone().acquire_owned().await;
+        // Acquiring only the writer can wake before the last operation drops
+        // its remaining permits. Wait for every admitted operation to finish.
+        let _permits = self
+            .slots
+            .clone()
+            .acquire_many_owned(self.capacity as u32)
+            .await;
     }
     pub(super) async fn run<T: Send + 'static>(
         &self,

@@ -16,7 +16,7 @@ Verified locally:
 Important limits:
 - Reconciliation compares submitted snapshots or stored source events; it neither authenticates their origin nor executes settlement.
 - Fingerprints are evidence of input content, not a durable or tamper-proof audit store.
-- API keys and rate limits currently apply to the service, not isolated tenants with scoped permissions.
+- Optional tenant mode isolates database namespaces, credentials and rate limits; source-scoped permissions and user management remain unimplemented.
 - Snapshot work after an HTTP timeout may be discarded. Event writes are atomic and durable with event-ID retry protection and status lookup; a timeout may still commit, so retry the same event. No replicated job service or high-availability storage exists.
 - The deployment still needs a defined threat model, independent security assessment, credential lifecycle, TLS/proxy configuration, tenant/access controls, audit retention, recovery objectives, monitored service-level targets, long-duration capacity/failure tests and a release/rollback process.
 - Hosted CI, Linux deployment, multi-host performance and disaster-recovery drills are not established by local Windows tests.

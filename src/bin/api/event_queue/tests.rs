@@ -118,6 +118,21 @@ async fn worker_panic_does_not_leak_queue_capacity() {
     assert!(q.run(workers, success).await.is_ok());
 }
 
+#[tokio::test]
+async fn idle_wait_includes_admitted_work_before_or_after_writer_ownership() {
+    let q = EventQueue::new(1);
+    let admitted = q.slots.clone().acquire_owned().await.unwrap();
+    // Writer availability alone does not imply all admitted work is drained.
+    assert_eq!(q.writer.available_permits(), 1);
+    let idle = q.wait_idle();
+    tokio::pin!(idle);
+    poll_waiting(idle.as_mut()).await;
+    drop(admitted);
+    tokio::time::timeout(std::time::Duration::from_secs(1), idle)
+        .await
+        .unwrap();
+}
+
 #[test]
 fn cancellation_before_blocking_dispatch_skips_storage_work() {
     let runtime = tokio::runtime::Builder::new_current_thread()

@@ -692,6 +692,7 @@ dependencies = [
  "sha2",
  "subtle",
  "tokio",
+ "tower",
  "utoipa",
  "uuid",
 ]

@@ -206,3 +206,45 @@ pub(super) async fn status(
 #[cfg(test)]
 #[path = "event_routes/tests.rs"]
 mod tests;
+
+#[utoipa::path(get,path="/v1/discrepancies",security(("bearerAuth"=[])),
+    params(("after"=Option<String>,Query),("limit"=Option<usize>,Query),("status"=Option<String>,Query),("currency"=Option<String>,Query),("source"=Option<String>,Query),("min_age_ms"=Option<u64>,Query)),
+    responses((status=200,description="Live bounded page; follow next_after even for empty entries",body=reconcile_cli::events::DiscrepancyPage), (status=422,description="Invalid filter",body=ErrorEnvelope)))]
+pub(super) async fn discrepancies(
+    State(state): State<AppState>,
+    query: Result<
+        axum::extract::Query<reconcile_cli::events::DiscrepancyQuery>,
+        axum::extract::rejection::QueryRejection,
+    >,
+) -> Result<Response, ApiError> {
+    let axum::extract::Query(query) = query.map_err(|_| {
+        ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_filter",
+            "Invalid discrepancy query",
+        )
+    })?;
+    let store = event_store(&state)?;
+    let (page, stages) = state
+        .event_queue
+        .run(state.workers.clone(), move || {
+            Ok((
+                store.discrepancies(query).map_err(storage_error)?,
+                Default::default(),
+            ))
+        })
+        .await?;
+    no_cache(page, stages)
+}
+#[utoipa::path(get,path="/v1/storage-health",security(("bearerAuth"=[])),
+    responses((status=200,description="Tenant storage counts; a full indexed metadata scan",body=reconcile_cli::events::StorageHealth)))]
+pub(super) async fn health(State(state): State<AppState>) -> Result<Response, ApiError> {
+    let store = event_store(&state)?;
+    let (health, stages) = state
+        .event_queue
+        .run(state.workers.clone(), move || {
+            Ok((store.health().map_err(storage_error)?, Default::default()))
+        })
+        .await?;
+    no_cache(health, stages)
+}

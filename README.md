@@ -4,6 +4,8 @@ A Rust library, command-line tool, and HTTP service for comparing payment snapsh
 
 Version 0.2.0 is a locally tested pilot candidate, licensed under MIT. The Cargo package and command-line executable are named `reconcile-cli`. This public repository uses synthetic payment data; it is not a payment processor or a claim of production deployment.
 
+Operational setup: [tenant isolation, discrepancy search, metrics, backup/restore and sustained-load acceptance](docs/OPERATIONS.md).
+
 [![CI](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/workflows/ci.yml)
 
 ## Engineering highlights
@@ -119,7 +121,7 @@ cargo clippy --locked --all-targets -- -D warnings
 
 CI is prepared for Windows/Linux tests, formatting, linting, release builds, dependency audit, and a Docker build. These hosted jobs require pushing the repository to GitHub; local checks do not prove hosted workflows or containers have run.
 
-The service uses one shared token, not tenant isolation or a user-management system. Reports are returned, not durably stored by the API. A pilot operator must retain source snapshots and reports under their own access and retention policies. This is not a banking certification or a production performance guarantee.
+The default mode uses one shared token. Optional tenant mode provides separate databases and credentials; it is not a user-management or source-scoped authorization system. Reports are returned, not durably stored by the API. A pilot operator must retain source snapshots and reports under their own access and retention policies. This is not a banking certification or a production performance guarantee.
 ## Comparative performance and API load testing
 
 See [the benchmark guide](perf/README.md) for reproducible engine comparisons and isolated, authenticated HTTP load tests. Results are saved under docs/performance.

@@ -3,6 +3,7 @@ use std::{future::Future, task::Poll, time::Duration};
 
 fn state() -> AppState {
     AppState {
+        metrics: Arc::new(super::super::metrics::Metrics::default()),
         event_store: None,
         event_queue: Arc::new(EventQueue::new(2)),
         config: Config {

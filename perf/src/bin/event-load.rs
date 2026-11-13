@@ -351,7 +351,7 @@ async fn main() {
     );
     let concurrency: usize = args[1].parse().unwrap();
     let seconds: u64 = args[2].parse().unwrap();
-    assert!((1..=32).contains(&concurrency) && (2..=60).contains(&seconds));
+    assert!((1..=32).contains(&concurrency) && (2..=600).contains(&seconds));
     let mut headers = reqwest::header::HeaderMap::new();
     let key = std::env::var("RECONCILE_API_KEY").expect("Isolated API key required");
     let mut auth = reqwest::header::HeaderValue::from_str(&format!("Bearer {key}")).unwrap();

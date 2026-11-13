@@ -11,6 +11,37 @@
         ],
         "type": "string"
       },
+      "DiscrepancyPage": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/LivePayment"
+            },
+            "type": "array"
+          },
+          "evaluated_at_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "next_after": {
+            "description": "Last scanned ID, not necessarily a returned entry. Follow even empty pages.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scanned": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entries",
+          "scanned",
+          "evaluated_at_ms"
+        ],
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -473,6 +504,28 @@
         ],
         "type": "object"
       },
+      "StorageHealth": {
+        "properties": {
+          "awaiting_counterpart": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "overdue_counterpart": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "payments": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "payments",
+          "awaiting_counterpart",
+          "overdue_counterpart"
+        ],
+        "type": "object"
+      },
       "VersionedPayment": {
         "properties": {
           "event_id": {
@@ -559,6 +612,94 @@
             "description": "Generated OpenAPI contract"
           }
         }
+      }
+    },
+    "/v1/discrepancies": {
+      "get": {
+        "operationId": "discrepancies",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_age_ms",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscrepancyPage"
+                }
+              }
+            },
+            "description": "Live bounded page; follow next_after even for empty entries"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid filter"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "event_routes"
+        ]
       }
     },
     "/v1/events": {
@@ -923,6 +1064,31 @@
           }
         ],
         "tags": []
+      }
+    },
+    "/v1/storage-health": {
+      "get": {
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            },
+            "description": "Tenant storage counts; a full indexed metadata scan"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "event_routes"
+        ]
       }
     }
   }

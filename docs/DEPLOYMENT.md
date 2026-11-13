@@ -1,6 +1,6 @@
 # Deployment and operations
 
-Use the source build, Windows archive, or Docker image for a controlled pilot. The snapshot API is stateless; the event API persists state in SQLite. Operators must back up and retain that database. It uses one shared bearer token and has no tenant-specific authorization.
+Use the source build, Windows archive, or Docker image for a controlled pilot. The snapshot API is stateless; the event API persists state in SQLite. Operators must back up and retain that database. Single-tenant mode uses a shared bearer token. Optional tenant credentials select separate databases and capacity limits; see [OPERATIONS.md](OPERATIONS.md) for configuration, monitoring and backup/restore.
 
 See [EVENTS.md](EVENTS.md) for event recovery, retry and backup semantics.
 

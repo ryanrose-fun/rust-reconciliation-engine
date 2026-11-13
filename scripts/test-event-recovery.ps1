@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $ApiBinary = (Resolve-Path $ApiBinary).Path
 $directory = Join-Path ([IO.Path]::GetTempPath()) ('reconcile-recovery-' + [guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($directory) | Out-Null
-$names = @('RECONCILE_BIND','RECONCILE_DB_PATH','RECONCILE_EVENT_WAIT_MS','RECONCILE_API_KEY','RECONCILE_REQUESTS_PER_SECOND')
+$names = @('RECONCILE_TENANTS_FILE','RECONCILE_BIND','RECONCILE_DB_PATH','RECONCILE_EVENT_WAIT_MS','RECONCILE_API_KEY','RECONCILE_REQUESTS_PER_SECOND')
 $saved = @{}
 foreach ($name in $names) { $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $listener = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Loopback, 0)
@@ -33,6 +33,7 @@ function Start-TestServer {
     throw 'Server did not become ready'
 }
 try {
+    Remove-Item Env:RECONCILE_TENANTS_FILE -ErrorAction SilentlyContinue
     $env:RECONCILE_BIND = '127.0.0.1:' + $port
     $env:RECONCILE_DB_PATH = Join-Path $directory 'events.sqlite3'
     $env:RECONCILE_EVENT_WAIT_MS = '100'

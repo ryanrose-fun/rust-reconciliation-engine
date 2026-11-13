@@ -1,5 +1,9 @@
 # Migration notes
 
+## Operational endpoints and optional tenant mode
+
+The existing schema remains version 1. Existing single-tenant files, API payloads and routes remain compatible. New endpoints: GET /v1/discrepancies, GET /v1/storage-health, and GET /metrics. Tenant mode is opt-in via RECONCILE_TENANTS_FILE and requires dedicated database directories. See [operations](OPERATIONS.md) before moving existing data. The maintenance binary provides consistent backup, verification and non-overwriting restore.
+
 ## Package and executable rename
 
 The Cargo package and default CLI executable are now named reconcile-cli (reconcile-cli.exe on Windows). Replace old hello_cargo executable invocations and Cargo package selections with reconcile-cli. Rust imports change from hello_cargo to reconcile_cli; path dependencies should use reconcile-cli as their dependency key.

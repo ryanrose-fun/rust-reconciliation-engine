@@ -1,5 +1,5 @@
 param(
- [ValidateRange(2,60)][int]$Seconds=10,
+ [ValidateRange(2,600)][int]$Seconds=10,
  [ValidateRange(1,5)][int[]]$CaseIndex=(1..5),
  [ValidatePattern('^[a-zA-Z0-9._-]+[.]json$')][string]$ReportName='event-load.json',
  [string]$ApiBinary="target/perf-api/release/api.exe",
@@ -9,7 +9,7 @@ $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'performance-common.ps1')
 Push-Location $root
-$names=@('RECONCILE_EVENT_QUEUE_CAPACITY','RECONCILE_BIND','RECONCILE_API_KEY','RECONCILE_DB_PATH','RECONCILE_EVENT_WAIT_MS','RECONCILE_REQUESTS_PER_SECOND','RECONCILE_CONCURRENCY','RECONCILE_TIMEOUT_MS','RECONCILE_MAX_BODY_BYTES','RECONCILE_MAX_PAYMENTS')
+$names=@('RECONCILE_TENANTS_FILE','RECONCILE_EVENT_QUEUE_CAPACITY','RECONCILE_BIND','RECONCILE_API_KEY','RECONCILE_DB_PATH','RECONCILE_EVENT_WAIT_MS','RECONCILE_REQUESTS_PER_SECOND','RECONCILE_CONCURRENCY','RECONCILE_TIMEOUT_MS','RECONCILE_MAX_BODY_BYTES','RECONCILE_MAX_PAYMENTS')
 $saved=@{}
 foreach($name in $names){$saved[$name]=[Environment]::GetEnvironmentVariable($name,'Process')}
 $server=$null
@@ -38,6 +38,7 @@ function Get-DatabaseBytes($db) {
  return $sum
 }
 try {
+ Remove-Item Env:RECONCILE_TENANTS_FILE -ErrorAction SilentlyContinue
  if(!$SkipBuild){
   cargo build --release --locked --bin api --target-dir target/perf-api
   if($LASTEXITCODE -ne 0){throw 'API build failed'}
@@ -89,6 +90,9 @@ try {
    Assert-ProcessSucceeded -Process $client -Name 'Event load client' -ErrorLog "$prefix.client.log"
   }
   $result=Get-Content "$prefix.json" -Raw | ConvertFrom-Json
+  $headers=@{Authorization='Bearer '+$env:RECONCILE_API_KEY}
+  try { $metrics=(Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 -Headers $headers -Uri "$base/metrics").Content } catch { $metrics="Metrics unavailable: $($_.Exception.Message)" }
+  $result | Add-Member operational_metrics $metrics
   # Force-stop only the server owned by this case; inspect its committed WAL.
   Stop-Process -Id $server.Id -Force
   $server.WaitForExit();$server.Dispose();$server=$null

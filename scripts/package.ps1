@@ -3,13 +3,13 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 try {
-    cargo build --release --locked --bin api --bin reconcile-cli --target-dir target/pilot
+    cargo build --release --locked --bin api --bin reconcile-cli --bin maintenance --target-dir target/pilot
     if ($LASTEXITCODE -ne 0) { throw 'Release build failed' }
     $meta = cargo metadata --no-deps --format-version 1 | ConvertFrom-Json
     $version = $meta.packages[0].version
     $folder = Join-Path $root ('dist/reconciliation-' + $version + '-windows-x64')
     New-Item -ItemType Directory -Path $folder -Force | Out-Null
-    Copy-Item target/pilot/release/api.exe,target/pilot/release/reconcile-cli.exe,LICENSE,README.md,THIRD_PARTY_NOTICES.txt -Destination $folder -Force
+    Copy-Item target/pilot/release/api.exe,target/pilot/release/reconcile-cli.exe,target/pilot/release/maintenance.exe,LICENSE,README.md,THIRD_PARTY_NOTICES.txt -Destination $folder -Force
     foreach ($dir in @('docs','examples','data')) { Copy-Item -LiteralPath $dir -Destination $folder -Recurse -Force }
     $hashes = Get-ChildItem -LiteralPath $folder -Recurse -File | Where-Object Name -ne 'SHA256SUMS' | ForEach-Object {
         $relative = $_.FullName.Substring($folder.Length + 1)

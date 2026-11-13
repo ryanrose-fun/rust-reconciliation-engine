@@ -1,6 +1,11 @@
 use super::*;
 use crate::{Currency, PaymentStatus};
-fn event(id: &str, source: EventSource, version: u64, status: PaymentStatus) -> PaymentEvent {
+pub(super) fn event(
+    id: &str,
+    source: EventSource,
+    version: u64,
+    status: PaymentStatus,
+) -> PaymentEvent {
     PaymentEvent {
         event_id: id.into(),
         source,
@@ -19,7 +24,7 @@ fn status(value: &LivePayment) -> String {
         .unwrap()
         .into()
 }
-fn memory() -> EventStore {
+pub(super) fn memory() -> EventStore {
     EventStore::in_memory(Duration::from_millis(1000)).unwrap()
 }
 #[test]

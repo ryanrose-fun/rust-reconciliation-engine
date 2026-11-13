@@ -133,9 +133,9 @@ The snapshot API and CLI remain available. Snapshot reports are not automaticall
 
 This is a durable local pilot, not a certified banking platform. A bounded FIFO queue serializes HTTP access to the SQLite connection; full queues and global limits return retryable overload responses; event throughput must be measured separately from snapshot benchmark results.
 
-There is one shared namespace and service credential. A caller with that key can submit either source. There is no tenant isolation, scoped source authorization, signed provenance, replication, failover, tamper-evident history or retention policy. Accepted stale and unchanged events are retained, so database size grows.
+Each configured tenant has a separate database namespace and credential (single-tenant mode remains the default). A caller with its tenant key can submit either source. There is no source-scoped authorization, signed provenance, replication, failover, tamper-evident history or retention policy. Accepted stale and unchanged events are retained, so database size grows.
 
-Use a local disk and restrict database file access. Database files are excluded from source packaging/Git. For a simple consistent backup, stop **all** processes using the database, then back up its directory including any WAL files. Do not copy only the main SQLite file while writers are running. Define and test restore procedures before storing important data.
+Use a local disk and restrict database file access. Database files are excluded from source packaging/Git. For a simple consistent backup, stop **all** processes using the database, then back up its directory including any WAL files. Do not copy only the main SQLite file while writers are running. The maintenance CLI now provides consistent online snapshots and verified non-overwriting restores; see [OPERATIONS.md](OPERATIONS.md). Rehearse recovery before storing important data.
 
 Containers mount a persistent named volume at /var/lib/reconcile. Removing that volume destroys state; container replacement alone should preserve it. Container deployment still needs testing on its target host.
 See [EVENT-PERFORMANCE.md](EVENT-PERFORMANCE.md) for the isolated durable-event load test and metric definitions.

@@ -11,3 +11,6 @@ ledger-demo.db*
 *.sqlite3
 *.sqlite3-wal
 *.sqlite3-shm
+
+/tenants*.json
+/backups/

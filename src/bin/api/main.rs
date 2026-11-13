@@ -1,7 +1,9 @@
 use axum::serve::ListenerExt;
 mod config;
+mod metrics;
 mod request_log;
 mod routes;
+mod tenancy;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -10,37 +12,56 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     let config = config::Config::from_env()?;
-    let database_existed = config.event_db.exists();
-    let store = std::sync::Arc::new(reconcile_cli::events::EventStore::open(
-        &config.event_db,
-        config.event_wait,
-    )?);
+    let (router, queues) = if let Some(path) = &config.tenant_file {
+        if config.api_key.is_some() {
+            return Err("Use tenant credentials or RECONCILE_API_KEY, not both".into());
+        }
+        let entries = serde_json::from_slice(&std::fs::read(path)?)?;
+        tenancy::build(&config, entries)?
+    } else {
+        let store = std::sync::Arc::new(reconcile_cli::events::EventStore::open(
+            &config.event_db,
+            config.event_wait,
+        )?);
+        let queue = std::sync::Arc::new(routes::EventQueue::new(config.event_queue_capacity));
+        (
+            routes::router_with_queue(config.clone(), store, queue.clone()),
+            vec![queue],
+        )
+    };
     let listener = tokio::net::TcpListener::bind(config.bind).await?;
     println!("API listening on http://{}", config.bind);
-    println!(
-        "Event database: {} ({})",
-        std::fs::canonicalize(&config.event_db)?.display(),
-        if database_existed { "existing" } else { "new" }
-    );
-    if config.api_key.is_none() {
-        println!("Loopback development mode: authentication disabled");
-    }
-    println!(
-        "GET /health | GET /openapi.json | POST /v1/reconcile | POST /v1/events | GET /v1/payments/{{payment_id}} | Ctrl+C to stop"
-    );
-    let queue = std::sync::Arc::new(routes::EventQueue::new(config.event_queue_capacity));
+    println!("Ctrl+C to stop; active storage operations drain before exit");
     axum::serve(
         listener.tap_io(|stream| {
             if let Err(error) = stream.set_nodelay(true) {
                 eprintln!("Could not enable TCP_NODELAY: {error}");
             }
         }),
-        routes::router_with_queue(config, store, queue.clone()),
+        router,
     )
     .with_graceful_shutdown(async {
-        let _ = tokio::signal::ctrl_c().await;
+        shutdown_signal().await;
     })
     .await?;
-    queue.wait_idle().await;
+    for queue in queues {
+        queue.wait_idle().await;
+    }
     Ok(())
 }
+
+async fn shutdown_signal() {
+    #[cfg(unix)]
+    {
+        let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("install SIGTERM handler");
+        tokio::select! { _ = tokio::signal::ctrl_c() => {}, _ = term.recv() => {} }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = tokio::signal::ctrl_c().await;
+    }
+}
+
+#[cfg(test)]
+mod tenancy_tests;

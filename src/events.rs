@@ -432,3 +432,9 @@ fn read_payment(connection: &Connection, id: &str, now: i64) -> Result<LivePayme
 }
 #[cfg(test)]
 mod tests;
+
+mod operations;
+pub use operations::{DiscrepancyPage, DiscrepancyQuery, StorageHealth, verify_backup};
+
+#[cfg(test)]
+mod operations_tests;

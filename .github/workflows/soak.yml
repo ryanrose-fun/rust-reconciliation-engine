@@ -1,0 +1,39 @@
+name: Sustained event acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per concurrency case (2 to 600)
+        default: '60'
+        required: true
+      rounds:
+        description: Repeated rounds (1 to 10)
+        default: '2'
+        required: true
+permissions:
+  contents: read
+jobs:
+  soak:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.99.1 --profile minimal
+      - run: cargo +1.99.1 build --release --locked --bin api
+      - run: cargo +1.99.1 build --release --locked --manifest-path perf/Cargo.toml --bin event-load
+      - name: Audit workloads, restart and shutdown
+        env:
+          SOAK_SECONDS: ${{ inputs.seconds }}
+          SOAK_ROUNDS: ${{ inputs.rounds }}
+        shell: bash
+        run: python scripts/load-test-events.py --seconds "$SOAK_SECONDS" --rounds "$SOAK_ROUNDS" --report soak-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: soak-${{ matrix.os }}
+          path: soak-report.json
+          if-no-files-found: warn

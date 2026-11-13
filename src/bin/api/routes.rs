@@ -49,6 +49,8 @@ struct ErrorBody {
 struct ErrorEnvelope {
     error: ErrorBody,
 }
+#[derive(Clone)]
+struct ErrorCode(&'static str);
 struct ApiError {
     status: StatusCode,
     code: &'static str,
@@ -67,6 +69,7 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         (
             self.status,
+            axum::Extension(ErrorCode(self.code)),
             Json(ErrorEnvelope {
                 error: ErrorBody {
                     code: self.code.into(),
@@ -79,6 +82,7 @@ impl IntoResponse for ApiError {
 }
 #[derive(Clone)]
 struct AppState {
+    metrics: Arc<super::metrics::Metrics>,
     event_store: Option<Arc<reconcile_cli::events::EventStore>>,
     event_queue: Arc<EventQueue>,
     config: Config,
@@ -101,7 +105,7 @@ pub(super) fn configured_router(config: Config) -> Router {
 }
 
 #[path = "event_queue.rs"]
-mod event_queue;
+pub(super) mod event_queue;
 pub(super) use event_queue::EventQueue;
 
 #[path = "event_routes.rs"]
@@ -120,7 +124,18 @@ pub(super) fn router_with_queue(
     store: Arc<reconcile_cli::events::EventStore>,
     queue: Arc<EventQueue>,
 ) -> Router {
+    let metrics = Arc::new(super::metrics::Metrics::default());
+    let weak = Arc::downgrade(&metrics);
+    tokio::spawn(async move {
+        loop {
+            let start = Instant::now();
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+            let Some(metrics) = weak.upgrade() else { break };
+            metrics.runtime_gap((milliseconds(start) - 100.).max(0.));
+        }
+    });
     let state = AppState {
+        metrics,
         event_queue: queue,
         event_store: Some(store),
         workers: Arc::new(Semaphore::new(config.concurrency)),
@@ -135,6 +150,9 @@ pub(super) fn router_with_queue(
     Router::new()
         .route("/v1/reconcile", post(reconcile))
         .route("/v1/events", post(event_routes::ingest))
+        .route("/v1/discrepancies", get(event_routes::discrepancies))
+        .route("/v1/storage-health", get(event_routes::health))
+        .route("/metrics", get(export_metrics))
         .route("/v1/payments/{payment_id}", get(event_routes::status))
         .route_layer(middleware::from_fn_with_state(state.clone(), guard))
         .route("/health", get(|| async { Json(json!({"status":"ok"})) }))
@@ -237,15 +255,40 @@ async fn admit(
 // Discard frames without collecting or parsing rejected uploads. Bound time,
 // bytes and simultaneous drains: an untrusted sender cannot demand infinite work.
 async fn reject_upload(state: &AppState, request: Request, error: ApiError) -> Response {
+    reject_body(&state.config, &state.rejection_drains, request, error).await
+}
+pub(super) async fn unauthorized(
+    config: &Config,
+    drains: &Arc<Semaphore>,
+    request: Request,
+) -> Response {
+    reject_body(
+        config,
+        drains,
+        request,
+        ApiError::new(
+            StatusCode::UNAUTHORIZED,
+            "unauthorized",
+            "A valid bearer token is required",
+        ),
+    )
+    .await
+}
+async fn reject_body(
+    config: &Config,
+    drains: &Arc<Semaphore>,
+    request: Request,
+    error: ApiError,
+) -> Response {
     let http1 = matches!(
         request.version(),
         axum::http::Version::HTTP_10 | axum::http::Version::HTTP_11
     );
     let mut response = error.into_response();
-    let complete = if let Ok(_permit) = state.rejection_drains.clone().try_acquire_owned() {
+    let complete = if let Ok(_permit) = drains.clone().try_acquire_owned() {
         let mut body = request.into_body();
         let drain = async {
-            let mut remaining = state.config.max_body;
+            let mut remaining = config.max_body;
             while let Some(frame) = body.frame().await {
                 let Ok(frame) = frame else { return false };
                 if let Some(data) = frame.data_ref() {
@@ -257,12 +300,9 @@ async fn reject_upload(state: &AppState, request: Request, error: ApiError) -> R
             }
             true
         };
-        tokio::time::timeout(
-            state.config.timeout.min(std::time::Duration::from_secs(2)),
-            drain,
-        )
-        .await
-        .unwrap_or(false)
+        tokio::time::timeout(config.timeout.min(std::time::Duration::from_secs(2)), drain)
+            .await
+            .unwrap_or(false)
     } else {
         false
     };
@@ -282,12 +322,16 @@ async fn guard(State(state): State<AppState>, request: Request, next: Next) -> R
         .map(|p| p.as_str().to_owned())
         .unwrap_or_else(|| "/unknown".into());
     let request_id = uuid::Uuid::new_v4().to_string();
-    let event_route = matches!(route.as_str(), "/v1/events" | "/v1/payments/{payment_id}");
+    let event_route = matches!(
+        route.as_str(),
+        "/v1/events" | "/v1/payments/{payment_id}" | "/v1/discrepancies" | "/v1/storage-health"
+    );
     let admission = tokio::time::timeout(
         state.config.timeout,
         admit(&state, request.headers(), event_route),
     )
     .await;
+    let admission_ms = milliseconds(started);
     let mut response = match admission {
         Ok(Err(error)) => reject_upload(&state, request, error).await,
         Err(_) => {
@@ -323,10 +367,17 @@ async fn guard(State(state): State<AppState>, request: Request, next: Next) -> R
             .headers_mut()
             .insert("retry-after", axum::http::HeaderValue::from_static("1"));
     }
+    state.metrics.observe(
+        response.status().as_u16(),
+        response.extensions().get::<ErrorCode>().map(|c| c.0),
+        milliseconds(started),
+        admission_ms,
+        response.extensions().get::<event_queue::EventStages>(),
+    );
     // Encode first: formatting serde_json::Value directly into stderr can issue
     // a write for each JSON fragment, blocking other requests on the stderr lock.
     let log_line = json!({"event":"request","request_id":request_id,"route":route,
-        "status":response.status().as_u16(),"elapsed_ms":milliseconds(started),
+        "status":response.status().as_u16(),"elapsed_ms":milliseconds(started),"admission_ms":admission_ms,
         "stages":response.extensions().get::<StageTimes>(), "event_stages":response.extensions().get::<event_queue::EventStages>()})
     .to_string();
     super::request_log::emit(log_line);
@@ -507,7 +558,13 @@ fn json_error(error: serde_json::Error) -> ApiError {
 }
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(reconcile, event_routes::ingest, event_routes::status),
+    paths(
+        reconcile,
+        event_routes::ingest,
+        event_routes::status,
+        event_routes::discrepancies,
+        event_routes::health
+    ),
     components(schemas(
         ReconcileRequest,
         SourceLabels,
@@ -793,6 +850,7 @@ mod tests {
 
     fn test_state(timeout: std::time::Duration) -> AppState {
         AppState {
+            metrics: Arc::new(crate::metrics::Metrics::default()),
             event_store: None,
             event_queue: Arc::new(EventQueue::new(32)),
             config: Config {
@@ -882,3 +940,13 @@ mod wire_tests;
 #[cfg(test)]
 #[path = "admission_tests.rs"]
 mod admission_tests;
+
+#[utoipa::path(get,path="/metrics",security(("bearerAuth"=[])),responses((status=200,description="Tenant Prometheus metrics, reset on restart",body=String,content_type="text/plain"),(status=401,description="Invalid credential",body=ErrorEnvelope)))]
+async fn export_metrics(State(state): State<AppState>) -> Response {
+    let (queued, active) = state.event_queue.depth();
+    (
+        [("content-type", "text/plain; version=0.0.4; charset=utf-8")],
+        state.metrics.render(queued, active),
+    )
+        .into_response()
+}
