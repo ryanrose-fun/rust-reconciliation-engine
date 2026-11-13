@@ -24,6 +24,16 @@ These are same-host synthetic, closed-loop workloads, not independent client/ser
 
 ## Regression coverage
 
-Final Windows suite: 38 library unit tests, 41 API tests, 10 library integration tests, one maintenance CLI integration test and seven benchmark tests (97 total). Strict Clippy and formatting checks pass. The maintenance CLI test verifies online backup of acknowledged WAL data, restored exact u64 amounts, idempotent retries, refusal to overwrite, and rejection of corrupt input. Tenant tests cover identical IDs with different amounts in separate databases, unauthorized access, restart recovery, and invalid filters. Bounded pagination tests cover empty pages with continuation, matching/waiting exclusion and source/currency/age filtering.
+Final integrated Windows suite: 38 library unit tests, 41 API tests, 10 library integration tests, one maintenance CLI integration test, four concurrently added ledger integration tests and seven benchmark tests (101 total). Strict Clippy and formatting checks pass. The maintenance CLI test verifies online backup of acknowledged WAL data, restored exact u64 amounts, idempotent retries, refusal to overwrite, and rejection of corrupt input. Tenant tests cover identical IDs with different amounts in separate databases, unauthorized access, restart recovery, and invalid filters. Bounded pagination tests cover empty pages with continuation, matching/waiting exclusion and source/currency/age filtering.
 
 The independent hosted workflow `Sustained event acceptance` runs the same portable workload on Windows and Linux. Passing controls narrow the investigation; they do not erase reproducible failures on another host. The remaining Windows stall is an explicit release limitation, not marked fixed.
+
+## Independent hosted verification
+
+Published code commit: 7dc4f28f0a0f0417dd100775d39b9faa8655d09a. [Standard CI](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/runs/43399307547) passed Windows/Linux tests, strict lints, Docker build and dependency audit. The concurrent engineering-decisions documentation and ledger feature were preserved and tested before publication.
+
+[Hosted soak workflow](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/runs/43399308964) passed two rounds each at concurrency 8 and 16 on both Windows and Linux: eight 60-second cases total. Linux (ext4) committed 844,028 unique events across 211,007 complete lifecycles. Hosted Windows committed 323,660 unique events across 80,915 complete lifecycles. All cases had zero workload errors, matching full database audits and successful restart lookups. Linux SIGTERM exit codes were zero; Windows forced termination is not treated as a graceful shutdown test.
+
+Raw reports: operations-hosted-linux-60s.json and operations-hosted-windows-60s.json. They retain binary hashes and operating-system information. Windows filesystem type was not independently verified by the portable runner. These are synthetic same-host measurements, not a comparative platform benchmark or a production SLA.
+
+The passing hosted Windows controls narrow the remaining local investigation but do not establish the cause of the local 10-second stalls or unexpected workload. No security settings were changed. Local Windows sustained reliability remains unresolved; do not infer that it was fixed simply because another machine passed.
