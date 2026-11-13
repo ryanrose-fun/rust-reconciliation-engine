@@ -131,3 +131,5 @@ Latest verified changes and measurements: [overload reliability and performance 
 The [event walkthrough](docs/EVENTS.md) explains POST /v1/events, GET /v1/payments/{payment_id}, durable SQLite storage, duplicate protection, stale versions and the waiting deadline. Existing snapshot commands still work.
 Persistent event performance: [run the load test](docs/EVENT-PERFORMANCE.md) and [read the local baseline](docs/performance/event-load-baseline.md).
 Bounded event queue: [behaviour and timings](docs/EVENT-QUEUE.md), with [before/after measurements](docs/performance/event-queue-comparison.md).
+
+Engineering trade-offs: [SQLite durability, bounded queues, idempotency and version ordering](docs/DECISIONS.md).
