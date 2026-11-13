@@ -1,0 +1,196 @@
+{
+  "arch": "x86_64",
+  "case_query_first_50_ms": 0.16103800000000001,
+  "deadline_batch_100_ms": 3.663167,
+  "engine_version": "0.4.0",
+  "os": "linux",
+  "results": [
+    {
+      "commit_ms": {
+        "max": 7.172623000000001,
+        "p50": 0.363819,
+        "p95": 0.693205,
+        "p99": 1.848203
+      },
+      "committed_events": 3000,
+      "database_and_wal_bytes": 7675792,
+      "delivery_rows": 0,
+      "elapsed_seconds": 1.434826462,
+      "event_latency_ms": {
+        "max": 7.253124,
+        "p50": 0.449317,
+        "p95": 0.814956,
+        "p99": 1.940398
+      },
+      "events_per_second": 2090.8451854298182,
+      "history_rows": 3000,
+      "notifications_enqueued": false,
+      "payments": 1000,
+      "recovery_drill_ms": 205,
+      "round": 1,
+      "transaction_work_ms": {
+        "max": 0.36155699999999996,
+        "p50": 0.078927,
+        "p95": 0.126512,
+        "p99": 0.21311100000000002
+      },
+      "validation_passed": true
+    },
+    {
+      "commit_ms": {
+        "max": 104.292012,
+        "p50": 0.401634,
+        "p95": 0.7151609999999999,
+        "p99": 2.494977
+      },
+      "committed_events": 3000,
+      "database_and_wal_bytes": 9539592,
+      "delivery_rows": 2000,
+      "elapsed_seconds": 1.8854780930000001,
+      "event_latency_ms": {
+        "max": 104.572024,
+        "p50": 0.5059119999999999,
+        "p95": 0.857255,
+        "p99": 2.6106979999999997
+      },
+      "events_per_second": 1591.1083831404662,
+      "history_rows": 3000,
+      "notifications_enqueued": true,
+      "payments": 1000,
+      "recovery_drill_ms": 314,
+      "round": 1,
+      "transaction_work_ms": {
+        "max": 0.377887,
+        "p50": 0.107479,
+        "p95": 0.13744,
+        "p99": 0.181814
+      },
+      "validation_passed": true
+    },
+    {
+      "commit_ms": {
+        "max": 4.524974,
+        "p50": 0.31914,
+        "p95": 0.599426,
+        "p99": 1.766984
+      },
+      "committed_events": 3000,
+      "database_and_wal_bytes": 7675792,
+      "delivery_rows": 0,
+      "elapsed_seconds": 1.309442637,
+      "event_latency_ms": {
+        "max": 4.609192,
+        "p50": 0.392336,
+        "p95": 0.684271,
+        "p99": 1.848965
+      },
+      "events_per_second": 2291.0511046693523,
+      "history_rows": 3000,
+      "notifications_enqueued": false,
+      "payments": 1000,
+      "recovery_drill_ms": 204,
+      "round": 2,
+      "transaction_work_ms": {
+        "max": 0.316275,
+        "p50": 0.07527,
+        "p95": 0.096899,
+        "p99": 0.122276
+      },
+      "validation_passed": true
+    },
+    {
+      "commit_ms": {
+        "max": 14.407805,
+        "p50": 0.414236,
+        "p95": 0.7351179999999999,
+        "p99": 2.428224
+      },
+      "committed_events": 3000,
+      "database_and_wal_bytes": 9547808,
+      "delivery_rows": 2000,
+      "elapsed_seconds": 1.6989688429999998,
+      "event_latency_ms": {
+        "max": 14.692845,
+        "p50": 0.514625,
+        "p95": 0.870637,
+        "p99": 2.538262
+      },
+      "events_per_second": 1765.7769372054343,
+      "history_rows": 3000,
+      "notifications_enqueued": true,
+      "payments": 1000,
+      "recovery_drill_ms": 294,
+      "round": 2,
+      "transaction_work_ms": {
+        "max": 0.333659,
+        "p50": 0.10605,
+        "p95": 0.137997,
+        "p99": 0.181466
+      },
+      "validation_passed": true
+    },
+    {
+      "commit_ms": {
+        "max": 102.608428,
+        "p50": 0.339961,
+        "p95": 0.6593789999999999,
+        "p99": 1.820719
+      },
+      "committed_events": 3000,
+      "database_and_wal_bytes": 7675792,
+      "delivery_rows": 0,
+      "elapsed_seconds": 1.627438947,
+      "event_latency_ms": {
+        "max": 102.81008299999999,
+        "p50": 0.41801400000000005,
+        "p95": 0.743498,
+        "p99": 1.90014
+      },
+      "events_per_second": 1843.387124002508,
+      "history_rows": 3000,
+      "notifications_enqueued": false,
+      "payments": 1000,
+      "recovery_drill_ms": 201,
+      "round": 3,
+      "transaction_work_ms": {
+        "max": 0.312321,
+        "p50": 0.076062,
+        "p95": 0.100367,
+        "p99": 0.13545500000000002
+      },
+      "validation_passed": true
+    },
+    {
+      "commit_ms": {
+        "max": 22.429965,
+        "p50": 0.40457,
+        "p95": 0.680741,
+        "p99": 2.394805
+      },
+      "committed_events": 3000,
+      "database_and_wal_bytes": 9556024,
+      "delivery_rows": 2000,
+      "elapsed_seconds": 1.6242645420000001,
+      "event_latency_ms": {
+        "max": 22.497089000000003,
+        "p50": 0.502078,
+        "p95": 0.803471,
+        "p99": 2.5005650000000004
+      },
+      "events_per_second": 1846.9897744033865,
+      "history_rows": 3000,
+      "notifications_enqueued": true,
+      "payments": 1000,
+      "recovery_drill_ms": 293,
+      "round": 3,
+      "transaction_work_ms": {
+        "max": 0.368053,
+        "p50": 0.105449,
+        "p95": 0.13626,
+        "p99": 0.177182
+      },
+      "validation_passed": true
+    }
+  ],
+  "scope": "single-thread storage; disk-backed SQLite WAL/FULL; event construction included; no HTTP or webhook delivery; 3 rounds, fresh database per case"
+}
