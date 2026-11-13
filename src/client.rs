@@ -37,6 +37,7 @@ pub struct DeliveryError {
     pub event_id: String,
     pub attempts: usize,
     pub outcome_unknown: bool,
+    pub retry_after_ms: Option<u64>,
     pub reason: Failure,
 }
 impl std::fmt::Display for DeliveryError {
@@ -63,6 +64,15 @@ pub struct EventClient {
     slots: Arc<tokio::sync::Semaphore>,
 }
 impl EventClient {
+    pub(crate) fn binding(&self) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hash = Sha256::new();
+        hash.update(self.endpoint.as_str());
+        hash.update([0]);
+        hash.update(&self.token);
+        format!("{:x}", hash.finalize())
+    }
+
     /// HTTPS is required except for localhost/loopback development. Redirects
     /// are disabled so credentials cannot be forwarded to another destination.
     pub fn new(base: &str, token: String, policy: RetryPolicy) -> Result<Self, &'static str> {
@@ -117,6 +127,7 @@ impl EventClient {
             event_id: event.event_id.clone(),
             attempts,
             outcome_unknown: unknown,
+            retry_after_ms: None,
             reason,
         };
         let bytes = serde_json::to_vec(event).map_err(|_| fail(0, false, Failure::InvalidEvent))?;
@@ -183,7 +194,9 @@ impl EventClient {
                 }
             };
             if attempts == self.policy.max_attempts {
-                return Err(fail(attempts, unknown, reason));
+                let mut error = fail(attempts, unknown, reason);
+                error.retry_after_ms = retry.map(|d| d.as_millis().min(u64::MAX as u128) as u64);
+                return Err(error);
             }
             let cap = (self.policy.initial_backoff * 2u32.pow((attempts - 1) as u32))
                 .min(self.policy.max_backoff);
@@ -191,8 +204,10 @@ impl EventClient {
                 (uuid::Uuid::new_v4().as_u128() % (cap.as_millis().max(1))) as u64,
             );
             let delay = retry.unwrap_or(jitter);
-            if Instant::now() + delay >= deadline {
-                return Err(fail(attempts, unknown, Failure::Deadline));
+            if delay >= deadline.saturating_duration_since(Instant::now()) {
+                let mut error = fail(attempts, unknown, Failure::Deadline);
+                error.retry_after_ms = retry.map(|d| d.as_millis().min(u64::MAX as u128) as u64);
+                return Err(error);
             }
             tokio::time::sleep(delay).await;
         }
@@ -201,10 +216,12 @@ impl EventClient {
 }
 fn retry_after(value: &str) -> Option<Duration> {
     if let Ok(seconds) = value.parse::<u64>() {
-        return Some(Duration::from_secs(seconds.min(86400)));
+        return Some(Duration::from_secs(seconds));
     }
     let date = chrono::DateTime::parse_from_rfc2822(value).ok()?;
     Some(Duration::from_millis(
-        (date.timestamp_millis() - chrono::Utc::now().timestamp_millis()).clamp(0, 86400000) as u64,
+        date.timestamp_millis()
+            .saturating_sub(chrono::Utc::now().timestamp_millis())
+            .max(0) as u64,
     ))
 }

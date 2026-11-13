@@ -37,6 +37,59 @@ fn app() -> Router {
         ..Config::default()
     })
 }
+
+#[tokio::test]
+async fn deadline_worker_opens_a_case_without_status_or_history_reads() {
+    let store = Arc::new(
+        reconcile_cli::events::EventStore::in_memory(std::time::Duration::from_millis(10)).unwrap(),
+    );
+    let app = router_with_store(
+        Config {
+            deadline_worker: true,
+            event_wait: std::time::Duration::from_millis(10),
+            ..Default::default()
+        },
+        store.clone(),
+    );
+    assert_eq!(
+        call(
+            &app,
+            "POST",
+            "/v1/events",
+            body("auto", "Internal", 1, "Completed"),
+            false
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(3);
+    loop {
+        if store
+            .cases(Default::default())
+            .is_ok_and(|p| !p.entries.is_empty())
+        {
+            break;
+        }
+        assert!(
+            tokio::time::Instant::now() < deadline,
+            "background worker did not create case"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    let (_, page, _) = call(&app, "GET", "/v1/cases", Value::Null, false).await;
+    assert_eq!(page["entries"][0]["status"], "MissingFromProvider");
+    assert_eq!(
+        store
+            .history("PAY-001", 0, 100)
+            .unwrap()
+            .entries
+            .last()
+            .unwrap()
+            .kind,
+        "Opened"
+    );
+}
 #[tokio::test]
 async fn event_and_status_routes_require_authentication() {
     let app = app();

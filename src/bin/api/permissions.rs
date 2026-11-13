@@ -40,7 +40,12 @@ impl Principal {
                 *method == Method::POST && route == "/v1/events"
             }
             Role::Investigator => {
-                *method == Method::POST && route == "/v1/payments/{payment_id}/investigation"
+                *method == Method::POST
+                    && matches!(
+                        route,
+                        "/v1/payments/{payment_id}/investigation"
+                            | "/v1/payments/{payment_id}/case"
+                    )
             }
             Role::Auditor => false,
         }

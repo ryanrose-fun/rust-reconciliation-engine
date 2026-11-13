@@ -1,5 +1,13 @@
 # Migration notes
 
+## Version 0.4.0: durable operational workflow and schema 3
+
+Back up each tenant before starting the new API. Schema 1 or 2 upgrades transactionally to schema 3, adding indexed pending deadlines, investigation assignments, and a durable notification queue. Existing event IDs and source evidence remain intact. Only the API automatically runs the deadline processor; library callers schedule process_deadlines themselves. Overdue existing payments will be observed after startup. Older binaries cannot open schema 3; rollback requires a pre-upgrade backup, not a manual version change.
+
+Webhook enqueueing is off until an administrator starts/configures a webhook worker for that database. It then stays enabled across restarts, including while the worker is stopped. Its bounded backlog can apply backpressure to event writes. Sender outboxes are separate databases with their own application ID/schema and optional client-feature binaries. The role model and existing payloads remain compatible; new assignment routes require Investigator or Administrator authority.
+
+See [DURABLE-OPERATIONS.md](DURABLE-OPERATIONS.md) for worker configuration, signed delivery semantics, archived-history retention, safe upgrade and restore commands.
+
 ## Version 0.3.0: source roles, delivery client, and schema 2
 
 Stop the old service and create a verified backup before upgrading each event database. The updated maintenance backup command reads schema-1 databases without migrating them. API startup upgrades schema 1 to 2 transactionally, adding case state and append-only history tables while preserving event IDs and payment evidence. Existing records get a labelled baseline on first observation; no historical transitions are invented.

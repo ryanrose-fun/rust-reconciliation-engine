@@ -95,6 +95,46 @@ async fn scoped_credentials_enforce_sources_read_only_audits_and_investigation_i
     assert_eq!(code, 200);
     let h: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert_eq!(h["current_status"], "StatusMismatch");
+    let update = serde_json::json!({"id":"assign-1","expected_revision":h["current_revision"],"expected_case_version":0,"owner":"alice","workflow":"InProgress","note":"Checking provider settlement"});
+    for key in [&keys[0], &keys[1], &keys[2]] {
+        assert_eq!(
+            call(&router, key, "POST", "/v1/payments/p/case", update.clone())
+                .await
+                .0,
+            403
+        );
+    }
+    assert_eq!(
+        call(
+            &router,
+            &keys[3],
+            "POST",
+            "/v1/payments/p/case",
+            update.clone()
+        )
+        .await
+        .0,
+        200
+    );
+    assert_eq!(
+        call(&router, &keys[3], "POST", "/v1/payments/p/case", update)
+            .await
+            .0,
+        200
+    );
+    let (code, cases) = call(
+        &router,
+        &keys[2],
+        "GET",
+        "/v1/cases?owner=alice&workflow=InProgress",
+        serde_json::Value::Null,
+    )
+    .await;
+    assert_eq!(code, 200);
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&cases).unwrap()["entries"][0]["case_version"],
+        1
+    );
     let note = serde_json::json!({"id":"note1","action":"Acknowledge","note":"Investigating","expected_revision":h["current_revision"]});
     for key in [&keys[0], &keys[1], &keys[2]] {
         assert_eq!(

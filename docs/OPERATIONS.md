@@ -25,7 +25,7 @@ cargo run --bin api
 
 Keep the file readable only by the service administrator/account. Root `tenants*.json` files are gitignored. Store production credentials in your secret manager and materialize a protected configuration file. Rotate by changing the key and restarting; scoped mode supports 1–16 independently identified credentials per tenant. See [the role configuration](INTEGRATION.md); the legacy single key retains administrator access. TLS termination is required outside localhost. Tenant mode never permits unauthenticated access to data or metrics. `/health` and `/openapi.json` remain public. Unknown credentials are not forwarded to any database.
 
-Schema-1 databases upgrade transactionally to schema 2 on API startup. Back up first and follow [migration notes](MIGRATION.md); old binaries cannot open schema 2. To move an existing single-tenant deployment, back it up, restore into that tenant's dedicated directory, stop the old instance, and configure the new tenant path. Never assign the same original data to two companies.
+Schema-1 databases upgrade transactionally to schema 3 on API startup. Back up first and follow [migration notes](MIGRATION.md); old binaries cannot open schema 3. To move an existing single-tenant deployment, back it up, restore into that tenant's dedicated directory, stop the old instance, and configure the new tenant path. Never assign the same original data to two companies.
 
 ## Find unresolved discrepancies
 
@@ -79,3 +79,7 @@ The runner supports 2–600 seconds per case. It clears tenant configuration for
 Acceptance gate: every lifecycle completes; zero transport errors or exhausted retry budgets; exact committed event counts and final payment states; no foreign workload; restart validation passes. A nonzero process exit or failed validation invalidates the throughput result. Run repeated tests on the intended OS/storage, outside development tool sandboxes, with representative monitoring and security software. Compare identical binaries/configuration/data/durability settings; do not claim a speed improvement from different machines or changed timeouts. Previous intermittent Windows stalls remain a known issue until reproduced, explained and independently verified as resolved. See the dated evidence in `docs/performance/`.
 
 For an independent hosted-machine control, dispatch the GitHub Actions 'Sustained event acceptance' workflow. It tests Linux and Windows, retains report artifacts even on failure, and fails the job if any case fails validation. It is separate from fast CI and does not run automatically on each push. On a native Linux checkout, build the release API and perf/event-load binaries, then run: python3 scripts/load-test-events.py --seconds 60 --rounds 2 --report docs/performance/control.json. The portable runner stores evidence under target/soak-evidence and records Linux filesystem type. Do not use a tmpfs-backed checkout to measure persistent disk throughput. It records correctness and latency; only the PowerShell runner samples CPU/memory/storage usage.
+
+## Durable operational workflow
+
+Version 0.4 adds a sender outbox, automatic deadlines, persistent signed webhooks, case assignments, verified archival and recovery drills. See [DURABLE-OPERATIONS.md](DURABLE-OPERATIONS.md) for commands, retention policy, capacity boundaries and restart semantics.

@@ -2,9 +2,11 @@
 
 A Rust library, command-line tool, and HTTP service for comparing payment snapshots and continuously reconciling versioned source events. It reports all amount, status, and currency differences for each payment, with source evidence and investigation recommendations. It does not execute payments.
 
-Version 0.3.0 is a locally tested pilot candidate, licensed under MIT. The Cargo package and command-line executable are named `reconcile-cli`. This public repository uses synthetic payment data; it is not a payment processor or a claim of production deployment.
+Version 0.4.0 is a locally tested pilot candidate, licensed under MIT. The Cargo package and command-line executable are named `reconcile-cli`. This public repository uses synthetic payment data; it is not a payment processor or a claim of production deployment.
 
-Integration: [scoped credentials, retrying Rust client, discrepancy history, and checkout/provider demo](docs/INTEGRATION.md). Existing databases upgrade to schema 2; [back up before upgrading](docs/MIGRATION.md).
+Integration: [scoped credentials, retrying Rust client, discrepancy history, and checkout/provider demo](docs/INTEGRATION.md). Existing databases upgrade to schema 3; [back up before upgrading](docs/MIGRATION.md).
+
+Durable operations: [outbox, automatic deadlines, signed webhooks, investigation queue, archival and recovery walkthrough](docs/DURABLE-OPERATIONS.md). Run `./examples/run-operations.ps1` for an isolated demonstration.
 
 Operational setup: [tenant isolation, discrepancy search, metrics, backup/restore and sustained-load acceptance](docs/OPERATIONS.md).
 

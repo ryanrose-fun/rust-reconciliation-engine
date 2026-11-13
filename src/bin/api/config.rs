@@ -4,6 +4,7 @@ use std::{net::SocketAddr, time::Duration};
 pub struct Config {
     pub bind: SocketAddr,
     pub scoped_auth: bool,
+    pub deadline_worker: bool,
     pub api_key: Option<String>,
     pub tenant_file: Option<std::path::PathBuf>,
     pub max_body: usize,
@@ -20,6 +21,7 @@ impl Default for Config {
         Self {
             bind: "127.0.0.1:3000".parse().unwrap(),
             scoped_auth: false,
+            deadline_worker: false,
             api_key: None,
             tenant_file: None,
             max_body: 1_048_576,
@@ -35,7 +37,10 @@ impl Default for Config {
 }
 impl Config {
     pub fn from_env() -> Result<Self, String> {
-        let mut c = Self::default();
+        let mut c = Self {
+            deadline_worker: true,
+            ..Self::default()
+        };
         if let Ok(v) = std::env::var("RECONCILE_BIND") {
             c.bind = v.parse().map_err(|_| "Invalid RECONCILE_BIND")?;
         }

@@ -147,7 +147,42 @@ pub(super) fn router_with_queue(
         rejection_drains: Arc::new(Semaphore::new(config.concurrency * 2)),
         config: config.clone(),
     };
+    if config.deadline_worker {
+        let weak_store = Arc::downgrade(state.event_store.as_ref().unwrap());
+        let weak_queue = Arc::downgrade(&state.event_queue);
+        let weak_workers = Arc::downgrade(&state.workers);
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                let (Some(store), Some(queue), Some(workers)) = (
+                    weak_store.upgrade(),
+                    weak_queue.upgrade(),
+                    weak_workers.upgrade(),
+                ) else {
+                    break;
+                };
+                if let Err(error) = queue
+                    .run(workers, move || {
+                        Ok((
+                            store
+                                .process_deadlines(100)
+                                .map_err(event_routes::storage_error)?,
+                            Default::default(),
+                        ))
+                    })
+                    .await
+                {
+                    eprintln!("Deadline processing deferred: {}", error.code);
+                }
+            }
+        });
+    }
     Router::new()
+        .route("/v1/cases", get(event_routes::cases))
+        .route(
+            "/v1/payments/{payment_id}/case",
+            post(event_routes::update_case),
+        )
         .route("/v1/reconcile", post(reconcile))
         .route("/v1/events", post(event_routes::ingest))
         .route(
@@ -357,6 +392,8 @@ async fn guard(State(state): State<AppState>, mut request: Request, next: Next) 
             | "/v1/payments/{payment_id}"
             | "/v1/discrepancies"
             | "/v1/storage-health"
+            | "/v1/cases"
+            | "/v1/payments/{payment_id}/case"
             | "/v1/payments/{payment_id}/history"
             | "/v1/payments/{payment_id}/investigation"
     );
@@ -599,7 +636,9 @@ fn json_error(error: serde_json::Error) -> ApiError {
         event_routes::discrepancies,
         event_routes::health,
         event_routes::history,
-        event_routes::investigate
+        event_routes::investigate,
+        event_routes::cases,
+        event_routes::update_case
     ),
     components(schemas(
         ReconcileRequest,

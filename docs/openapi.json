@@ -1,6 +1,106 @@
 {
   "components": {
     "schemas": {
+      "CaseEntry": {
+        "properties": {
+          "acknowledged": {
+            "type": "boolean"
+          },
+          "case_version": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "opened_at_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payment_id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "workflow": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "payment_id",
+          "status",
+          "revision",
+          "opened_at_ms",
+          "workflow",
+          "case_version",
+          "acknowledged"
+        ],
+        "type": "object"
+      },
+      "CasePage": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/CaseEntry"
+            },
+            "type": "array"
+          },
+          "next_after": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "type": "object"
+      },
+      "CaseUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_case_version": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "expected_revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowStatus"
+          }
+        },
+        "required": [
+          "id",
+          "expected_revision",
+          "expected_case_version",
+          "workflow",
+          "note"
+        ],
+        "type": "object"
+      },
       "Currency": {
         "description": "Supported currencies. Amounts use the currency's minor unit; no conversion is performed.",
         "enum": [
@@ -700,6 +800,14 @@
           "AwaitingProvider"
         ],
         "type": "string"
+      },
+      "WorkflowStatus": {
+        "enum": [
+          "Open",
+          "InProgress",
+          "Waiting"
+        ],
+        "type": "string"
       }
     },
     "securitySchemes": {
@@ -754,6 +862,94 @@
             "description": "Generated OpenAPI contract"
           }
         }
+      }
+    },
+    "/v1/cases": {
+      "get": {
+        "operationId": "cases",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "owner",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workflow",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "acknowledged",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_age_ms",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CasePage"
+                }
+              }
+            },
+            "description": "Active investigation queue; deadline worker materializes overdue cases"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid query"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "event_routes"
+        ]
       }
     },
     "/v1/discrepancies": {
@@ -1083,6 +1279,71 @@
               }
             },
             "description": "Deadline expired"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "event_routes"
+        ]
+      }
+    },
+    "/v1/payments/{payment_id}/case": {
+      "post": {
+        "operationId": "update_case",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationReceipt"
+                }
+              }
+            },
+            "description": "Assignment and workflow recorded without changing payment evidence"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Investigator role required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Case or evidence changed"
           }
         },
         "security": [

@@ -133,7 +133,7 @@ fn schema_one_migration_preserves_evidence_and_marks_unknown_past_as_baseline() 
     {
         let c = Connection::open(&path).unwrap();
         c.execute_batch(
-            "DROP TABLE case_state; DROP TABLE payment_history; PRAGMA user_version=1;",
+            "DROP TABLE pending_deadlines; DROP TABLE case_workflow; DROP TABLE notification_settings; DROP TABLE delivery_jobs; DROP INDEX due_payments; DROP TABLE case_state; DROP TABLE payment_history; PRAGMA user_version=1;",
         )
         .unwrap();
     }
