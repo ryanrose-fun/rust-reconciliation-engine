@@ -1,8 +1,16 @@
 # Migration notes
 
+## Version 0.3.0: source roles, delivery client, and schema 2
+
+Stop the old service and create a verified backup before upgrading each event database. The updated maintenance backup command reads schema-1 databases without migrating them. API startup upgrades schema 1 to 2 transactionally, adding case state and append-only history tables while preserving event IDs and payment evidence. Existing records get a labelled baseline on first observation; no historical transitions are invented.
+
+Older binaries reject schema 2. To roll back, stop the new service and restore the pre-upgrade backup to a fresh destination; changes accepted since that backup must be reconciled separately. Do not manually lower user_version. The maintenance verifier accepts both schemas. Ledger databases are separate and unaffected.
+
+Legacy tenant api_key credentials remain administrators. Opt into separate source writer, auditor, and investigator credentials using the new credentials list, never both fields. Existing event and batch payloads remain compatible. The optional client feature adds the Rust HTTP client. See [integration guide](INTEGRATION.md) for roles, history routes, revision-based acknowledgement and the executable example.
+
 ## Operational endpoints and optional tenant mode
 
-The existing schema remains version 1. Existing single-tenant files, API payloads and routes remain compatible. New endpoints: GET /v1/discrepancies, GET /v1/storage-health, and GET /metrics. Tenant mode is opt-in via RECONCILE_TENANTS_FILE and requires dedicated database directories. See [operations](OPERATIONS.md) before moving existing data. The maintenance binary provides consistent backup, verification and non-overwriting restore.
+At that earlier milestone the schema remained version 1; version 0.3.0 now migrates it as described above. Existing single-tenant files, API payloads and routes remain compatible. New endpoints: GET /v1/discrepancies, GET /v1/storage-health, and GET /metrics. Tenant mode is opt-in via RECONCILE_TENANTS_FILE and requires dedicated database directories. See [operations](OPERATIONS.md) before moving existing data. The maintenance binary provides consistent backup, verification and non-overwriting restore.
 
 ## Package and executable rename
 

@@ -5,6 +5,158 @@ use axum::{
     http::Request,
 };
 use tower::ServiceExt;
+
+#[tokio::test]
+async fn scoped_credentials_enforce_sources_read_only_audits_and_investigation_identity() {
+    use crate::permissions::Role;
+    let dir = std::env::temp_dir().join(format!("scopes-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir(&dir).unwrap();
+    let keys = [
+        "i".repeat(32),
+        "p".repeat(32),
+        "a".repeat(32),
+        "n".repeat(32),
+    ];
+    let credentials = [
+        Role::InternalWriter,
+        Role::ProviderWriter,
+        Role::Auditor,
+        Role::Investigator,
+    ]
+    .into_iter()
+    .enumerate()
+    .map(|(i, role)| Credential {
+        id: format!("credential-{i}"),
+        api_key: keys[i].clone(),
+        role,
+    })
+    .collect();
+    let (router, queues) = build(
+        &crate::config::Config::default(),
+        vec![Tenant {
+            id: "scoped".into(),
+            api_key: String::new(),
+            credentials,
+            database: dir.join("events.sqlite3"),
+        }],
+    )
+    .unwrap();
+    let input = serde_json::json!({"event_id":"i1","source":"Internal","version":1,"payment":{"id":"p","currency":"GBP","amount_minor":100,"status":"Completed"}});
+    for key in [&keys[1], &keys[2], &keys[3]] {
+        assert_eq!(
+            call(&router, key, "POST", "/v1/events", input.clone())
+                .await
+                .0,
+            403
+        );
+    }
+    assert_eq!(
+        call(
+            &router,
+            &keys[2],
+            "GET",
+            "/v1/payments/p",
+            serde_json::Value::Null
+        )
+        .await
+        .0,
+        404
+    );
+    assert_eq!(
+        call(&router, &keys[0], "POST", "/v1/events", input.clone())
+            .await
+            .0,
+        200
+    );
+    let mut provider = input;
+    provider["event_id"] = "p1".into();
+    provider["source"] = "Provider".into();
+    provider["payment"]["status"] = "Pending".into();
+    assert_eq!(
+        call(&router, &keys[0], "POST", "/v1/events", provider.clone())
+            .await
+            .0,
+        403
+    );
+    assert_eq!(
+        call(&router, &keys[1], "POST", "/v1/events", provider)
+            .await
+            .0,
+        200
+    );
+    let (code, body) = call(
+        &router,
+        &keys[2],
+        "GET",
+        "/v1/payments/p/history",
+        serde_json::Value::Null,
+    )
+    .await;
+    assert_eq!(code, 200);
+    let h: serde_json::Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(h["current_status"], "StatusMismatch");
+    let note = serde_json::json!({"id":"note1","action":"Acknowledge","note":"Investigating","expected_revision":h["current_revision"]});
+    for key in [&keys[0], &keys[1], &keys[2]] {
+        assert_eq!(
+            call(
+                &router,
+                key,
+                "POST",
+                "/v1/payments/p/investigation",
+                note.clone()
+            )
+            .await
+            .0,
+            403
+        );
+    }
+    assert_eq!(
+        call(
+            &router,
+            &keys[3],
+            "POST",
+            "/v1/payments/p/investigation",
+            note.clone()
+        )
+        .await
+        .0,
+        200
+    );
+    let mut spoof = note;
+    spoof["actor"] = "administrator".into();
+    assert_eq!(
+        call(
+            &router,
+            &keys[3],
+            "POST",
+            "/v1/payments/p/investigation",
+            spoof
+        )
+        .await
+        .0,
+        422
+    );
+    let (_, body) = call(
+        &router,
+        &keys[2],
+        "GET",
+        "/v1/payments/p/history",
+        serde_json::Value::Null,
+    )
+    .await;
+    let h: serde_json::Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(h["acknowledged"], true);
+    assert_eq!(
+        h["entries"].as_array().unwrap().last().unwrap()["actor"],
+        "credential-3"
+    );
+    assert_eq!(h["current_status"], "StatusMismatch");
+    drop(router);
+    for q in queues {
+        q.wait_idle().await;
+    }
+    std::fs::remove_dir_all(dir).unwrap();
+}
 async fn call(
     router: &Router,
     key: &str,
@@ -42,11 +194,13 @@ async fn tenants_isolate_events_lookups_reports_metrics_and_restarts() {
         vec![
             Tenant {
                 id: "a".into(),
+                credentials: vec![],
                 api_key: a.clone(),
                 database: root.join("a/events.sqlite3"),
             },
             Tenant {
                 id: "b".into(),
+                credentials: vec![],
                 api_key: b.clone(),
                 database: root.join("b/events.sqlite3"),
             },
@@ -146,11 +300,13 @@ async fn rejects_reused_tenant_keys_and_database_directories() {
     let entries = vec![
         Tenant {
             id: "a".into(),
+            credentials: vec![],
             api_key: "a".repeat(32),
             database: root.join("events.sqlite3"),
         },
         Tenant {
             id: "b".into(),
+            credentials: vec![],
             api_key: "b".repeat(32),
             database: root.join("events.sqlite3"),
         },

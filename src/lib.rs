@@ -32,3 +32,6 @@ pub fn reconcile_report(
     report.metadata.provider_source = audit::source_reference(provider);
     Ok(report)
 }
+
+#[cfg(feature = "client")]
+pub mod client;

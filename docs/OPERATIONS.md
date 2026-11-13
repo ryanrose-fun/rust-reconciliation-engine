@@ -23,9 +23,9 @@ Remove-Item Env:RECONCILE_API_KEY -ErrorAction SilentlyContinue
 cargo run --bin api
 ```
 
-Keep the file readable only by the service administrator/account. Root `tenants*.json` files are gitignored. Store production credentials in your secret manager and materialize a protected configuration file. Rotate by changing the key and restarting; only one key per tenant is supported, so coordinate clients. TLS termination is required outside localhost. Tenant mode never permits unauthenticated access to data or metrics. `/health` and `/openapi.json` remain public. Unknown credentials are not forwarded to any database.
+Keep the file readable only by the service administrator/account. Root `tenants*.json` files are gitignored. Store production credentials in your secret manager and materialize a protected configuration file. Rotate by changing the key and restarting; scoped mode supports 1–16 independently identified credentials per tenant. See [the role configuration](INTEGRATION.md); the legacy single key retains administrator access. TLS termination is required outside localhost. Tenant mode never permits unauthenticated access to data or metrics. `/health` and `/openapi.json` remain public. Unknown credentials are not forwarded to any database.
 
-Existing schema-1 databases remain compatible; no destructive migration is performed. To move an existing single-tenant deployment, back it up, restore into that tenant's dedicated directory, stop the old instance, and configure the new tenant path. Never assign the same original data to two companies.
+Schema-1 databases upgrade transactionally to schema 2 on API startup. Back up first and follow [migration notes](MIGRATION.md); old binaries cannot open schema 2. To move an existing single-tenant deployment, back it up, restore into that tenant's dedicated directory, stop the old instance, and configure the new tenant path. Never assign the same original data to two companies.
 
 ## Find unresolved discrepancies
 

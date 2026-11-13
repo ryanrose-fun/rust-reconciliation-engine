@@ -122,38 +122,47 @@ impl EventStore {
     /// SQLite creates a consistent standalone backup, including committed WAL data.
     /// The destination must not exist. Never copy a live database file directly.
     pub fn backup(&self, destination: &Path) -> Result<(), EventError> {
-        if destination.exists() {
-            return Err(EventError::InvalidInput(
-                "Backup destination already exists",
-            ));
-        }
-        let connection = self.lock()?;
-        connection.execute(
-            "VACUUM INTO ?1",
-            [destination
-                .to_str()
-                .ok_or(EventError::InvalidInput("Backup path must be UTF-8"))?],
-        )?;
-        // Do not rely on VACUUM INTO alone to flush the output before reporting
-        // success. Sync the standalone file, and its directory on Unix.
-        std::fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(destination)
-            .and_then(|file| file.sync_all())
-            .map_err(EventError::Io)?;
-        #[cfg(unix)]
-        std::fs::File::open(
-            destination
-                .parent()
-                .filter(|p| !p.as_os_str().is_empty())
-                .unwrap_or(Path::new(".")),
-        )
-        .and_then(|directory| directory.sync_all())
-        .map_err(EventError::Io)?;
-        verify_backup(destination)?;
-        Ok(())
+        snapshot(&*self.lock()?, destination)
     }
+}
+pub fn backup_database(source: &Path, destination: &Path) -> Result<(), EventError> {
+    verify_backup(source)?;
+    let connection =
+        Connection::open_with_flags(source, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+    connection.busy_timeout(Duration::from_millis(250))?;
+    snapshot(&connection, destination)
+}
+fn snapshot(connection: &Connection, destination: &Path) -> Result<(), EventError> {
+    if destination.exists() {
+        return Err(EventError::InvalidInput(
+            "Backup destination already exists",
+        ));
+    }
+    connection.execute(
+        "VACUUM INTO ?1",
+        [destination
+            .to_str()
+            .ok_or(EventError::InvalidInput("Backup path must be UTF-8"))?],
+    )?;
+    // Do not rely on VACUUM INTO alone to flush the output before reporting
+    // success. Sync the standalone file, and its directory on Unix.
+    std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(destination)
+        .and_then(|file| file.sync_all())
+        .map_err(EventError::Io)?;
+    #[cfg(unix)]
+    std::fs::File::open(
+        destination
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(Path::new(".")),
+    )
+    .and_then(|directory| directory.sync_all())
+    .map_err(EventError::Io)?;
+    verify_backup(destination)?;
+    Ok(())
 }
 pub fn verify_backup(path: &Path) -> Result<(), EventError> {
     let c = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
@@ -162,8 +171,12 @@ pub fn verify_backup(path: &Path) -> Result<(), EventError> {
         return Err(EventError::CorruptData);
     }
     let version: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-    if version != 1 {
+    if version != 1 && version != 2 {
         return Err(EventError::UnsupportedSchema);
+    }
+    if version == 2 {
+        c.prepare("SELECT sequence,note_id,request FROM payment_history LIMIT 0")?;
+        c.prepare("SELECT status,signature,revision FROM case_state LIMIT 0")?;
     }
     let violations: i64 =
         c.query_row("SELECT count(*) FROM pragma_foreign_key_check", [], |r| {

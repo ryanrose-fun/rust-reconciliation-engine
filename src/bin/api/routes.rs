@@ -150,6 +150,14 @@ pub(super) fn router_with_queue(
     Router::new()
         .route("/v1/reconcile", post(reconcile))
         .route("/v1/events", post(event_routes::ingest))
+        .route(
+            "/v1/payments/{payment_id}/history",
+            get(event_routes::history),
+        )
+        .route(
+            "/v1/payments/{payment_id}/investigation",
+            post(event_routes::investigate),
+        )
         .route("/v1/discrepancies", get(event_routes::discrepancies))
         .route("/v1/storage-health", get(event_routes::health))
         .route("/metrics", get(export_metrics))
@@ -314,17 +322,43 @@ async fn reject_body(
     response
 }
 
-async fn guard(State(state): State<AppState>, request: Request, next: Next) -> Response {
+async fn guard(State(state): State<AppState>, mut request: Request, next: Next) -> Response {
     let started = Instant::now();
     let route = request
         .extensions()
         .get::<axum::extract::MatchedPath>()
         .map(|p| p.as_str().to_owned())
         .unwrap_or_else(|| "/unknown".into());
+    let principal = request
+        .extensions()
+        .get::<super::permissions::Principal>()
+        .cloned();
+    if state.config.scoped_auth && principal.is_none() {
+        return unauthorized(&state.config, &state.rejection_drains, request).await;
+    }
+    let principal = principal.unwrap_or_else(super::permissions::Principal::legacy);
+    if !principal.allows(request.method(), &route) {
+        return reject_upload(
+            &state,
+            request,
+            ApiError::new(
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                "Credential does not permit this operation",
+            ),
+        )
+        .await;
+    }
+    request.extensions_mut().insert(principal);
     let request_id = uuid::Uuid::new_v4().to_string();
     let event_route = matches!(
         route.as_str(),
-        "/v1/events" | "/v1/payments/{payment_id}" | "/v1/discrepancies" | "/v1/storage-health"
+        "/v1/events"
+            | "/v1/payments/{payment_id}"
+            | "/v1/discrepancies"
+            | "/v1/storage-health"
+            | "/v1/payments/{payment_id}/history"
+            | "/v1/payments/{payment_id}/investigation"
     );
     let admission = tokio::time::timeout(
         state.config.timeout,
@@ -563,7 +597,9 @@ fn json_error(error: serde_json::Error) -> ApiError {
         event_routes::ingest,
         event_routes::status,
         event_routes::discrepancies,
-        event_routes::health
+        event_routes::health,
+        event_routes::history,
+        event_routes::investigate
     ),
     components(schemas(
         ReconcileRequest,

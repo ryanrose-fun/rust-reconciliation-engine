@@ -1,4 +1,5 @@
 //! Credentials select a complete router, including its database and capacity limits.
+use super::permissions::{Principal, Role};
 use super::{config::Config, routes};
 use axum::{
     Router,
@@ -15,12 +16,40 @@ use tower::ServiceExt;
 #[serde(deny_unknown_fields)]
 pub struct Tenant {
     pub id: String,
+    #[serde(default)]
     pub api_key: String,
+    #[serde(default)]
+    pub credentials: Vec<Credential>,
     pub database: PathBuf,
+}
+#[derive(Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Credential {
+    pub id: String,
+    pub api_key: String,
+    pub role: Role,
+}
+impl Tenant {
+    fn keys(&self) -> Result<Vec<Credential>, &'static str> {
+        if !self.api_key.is_empty() {
+            if !self.credentials.is_empty() {
+                return Err("Use api_key or credentials, never both");
+            }
+            return Ok(vec![Credential {
+                id: "legacy-administrator".into(),
+                api_key: self.api_key.clone(),
+                role: Role::Administrator,
+            }]);
+        }
+        if self.credentials.is_empty() || self.credentials.len() > 16 {
+            return Err("Each tenant needs 1..16 credentials");
+        }
+        Ok(self.credentials.clone())
+    }
 }
 type BuiltTenants = (Router, Vec<Arc<routes::EventQueue>>);
 struct TenantRoutes {
-    routers: Vec<([u8; 32], Router)>,
+    routers: Vec<([u8; 32], Principal, Router)>,
     config: Config,
     drains: Arc<tokio::sync::Semaphore>,
 }
@@ -48,13 +77,26 @@ pub fn build(
                 .bytes()
                 .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
             || !ids.insert(&tenant.id)
-            || !keys.insert(&tenant.api_key)
         {
             return Err("Tenant IDs and keys must be valid and unique".into());
         }
-        let mut c = config.clone();
-        c.api_key = Some(tenant.api_key.clone());
-        c.validate()?;
+        let mut credential_ids = std::collections::HashSet::new();
+        for credential in tenant.keys()? {
+            if credential.id.is_empty()
+                || credential.id.len() > 64
+                || !credential
+                    .id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+                || !credential_ids.insert(credential.id.clone())
+                || !keys.insert(credential.api_key.clone())
+            {
+                return Err("Credential IDs must be valid and keys globally unique".into());
+            }
+            let mut c = config.clone();
+            c.api_key = Some(credential.api_key);
+            c.validate()?;
+        }
         if !tenant.database.is_absolute() || tenant.database.file_name().is_none() {
             return Err("Tenant database paths must be absolute".into());
         }
@@ -80,17 +122,25 @@ pub fn build(
     }
     for tenant in entries {
         let mut c = config.clone();
-        c.api_key = Some(tenant.api_key.clone());
-        c.event_db = tenant.database;
+        c.api_key = None;
+        c.scoped_auth = true;
+        c.event_db = tenant.database.clone();
         let store = Arc::new(reconcile_cli::events::EventStore::open(
             &c.event_db,
             c.event_wait,
         )?);
         let queue = Arc::new(routes::EventQueue::new(c.event_queue_capacity));
-        routers.push((
-            Sha256::digest(tenant.api_key.as_bytes()).into(),
-            routes::router_with_queue(c, store, queue.clone()),
-        ));
+        let router = routes::router_with_queue(c, store, queue.clone());
+        for credential in tenant.keys()? {
+            routers.push((
+                Sha256::digest(credential.api_key.as_bytes()).into(),
+                Principal {
+                    id: credential.id,
+                    role: credential.role,
+                },
+                router.clone(),
+            ));
+        }
         queues.push(queue);
     }
     let router = Router::new()
@@ -110,7 +160,7 @@ pub fn build(
         }));
     Ok((router, queues))
 }
-async fn dispatch(State(tenants): State<Tenants>, request: Request) -> Response {
+async fn dispatch(State(tenants): State<Tenants>, mut request: Request) -> Response {
     let token = request
         .headers()
         .get("authorization")
@@ -119,12 +169,13 @@ async fn dispatch(State(tenants): State<Tenants>, request: Request) -> Response 
         .unwrap_or("");
     let digest: [u8; 32] = Sha256::digest(token.as_bytes()).into();
     let mut selected = None;
-    for (key, router) in tenants.routers.iter() {
+    for (key, principal, router) in tenants.routers.iter() {
         if bool::from(key.ct_eq(&digest)) {
-            selected = Some(router.clone());
+            selected = Some((principal.clone(), router.clone()));
         }
     }
-    if let Some(router) = selected {
+    if let Some((principal, router)) = selected {
+        request.extensions_mut().insert(principal);
         return router.oneshot(request).await.unwrap();
     }
     routes::unauthorized(&tenants.config, &tenants.drains, request).await

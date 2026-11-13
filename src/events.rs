@@ -84,6 +84,7 @@ pub enum EventError {
     InvalidInput(&'static str),
     EventIdConflict,
     VersionConflict,
+    RevisionConflict,
     NotFound,
     Busy,
     Database(rusqlite::Error),
@@ -96,6 +97,9 @@ impl std::fmt::Display for EventError {
         f.write_str(match self {
             Self::InvalidInput(message) => message,
             Self::EventIdConflict => "Event ID was already used with different content",
+            Self::RevisionConflict => {
+                "Investigation revision or request identity conflicts; reload history"
+            }
             Self::VersionConflict => "Source version was already used with different payment data",
             Self::NotFound => "Payment not found",
             Self::Busy => "Event storage is busy; retry the same event",
@@ -209,9 +213,14 @@ impl EventStore {
                 PRAGMA user_version=1;
             ",
             )?;
-        } else if version != 1 {
+        } else if version != 1 && version != 2 {
             return Err(EventError::UnsupportedSchema);
         }
+        if version < 2 {
+            history::migrate(&tx)?;
+        }
+        tx.prepare("SELECT status,signature,revision FROM case_state LIMIT 0")?;
+        tx.prepare("SELECT sequence,note_id,request FROM payment_history LIMIT 0")?;
         // Verify expected tables/columns before accepting traffic.
         tx.prepare("SELECT p.payment_id,p.first_seen_at_ms,p.waiting_until_ms,s.version,s.payload,s.event_id,s.received_at_ms,e.outcome,e.received_at_ms,e.payload FROM payments p LEFT JOIN source_state s ON s.payment_id=p.payment_id LEFT JOIN event_log e ON e.event_id=s.event_id LIMIT 0")?;
         tx.commit()?;
@@ -260,6 +269,13 @@ impl EventStore {
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         timings.begin_ms = elapsed_ms(begin);
         let work = std::time::Instant::now();
+        if tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM payments WHERE payment_id=?1)",
+            [&event.payment.id],
+            |r| r.get::<_, bool>(0),
+        )? {
+            history::capture(&tx, &event.payment.id, now)?;
+        }
         let existing: Option<(String, String)> = tx
             .query_row(
                 "SELECT payload,outcome FROM event_log WHERE event_id=?1",
@@ -275,7 +291,7 @@ impl EventStore {
                 event_id: event.event_id,
                 duplicate_event: true,
                 outcome: serde_json::from_str(&outcome).map_err(|_| EventError::CorruptData)?,
-                payment: read_payment(&tx, &event.payment.id, now)?,
+                payment: history::capture(&tx, &event.payment.id, now)?,
             };
             timings.work_ms = elapsed_ms(work);
             let commit = std::time::Instant::now();
@@ -323,7 +339,7 @@ impl EventStore {
             event_id: event.event_id,
             duplicate_event: false,
             outcome,
-            payment: read_payment(&tx, &event.payment.id, now)?,
+            payment: history::capture(&tx, &event.payment.id, now)?,
         };
         // Acknowledgement follows commit; event identity and current state are atomic.
         timings.work_ms = elapsed_ms(work);
@@ -359,10 +375,10 @@ impl EventStore {
             ..Default::default()
         };
         let begin = std::time::Instant::now();
-        let tx = connection.transaction()?;
+        let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         timings.begin_ms = elapsed_ms(begin);
         let work = std::time::Instant::now();
-        let payment = read_payment(&tx, payment_id, now)?;
+        let payment = history::capture(&tx, payment_id, now)?;
         timings.work_ms = elapsed_ms(work);
         let commit = std::time::Instant::now();
         tx.commit()?;
@@ -434,7 +450,17 @@ fn read_payment(connection: &Connection, id: &str, now: i64) -> Result<LivePayme
 mod tests;
 
 mod operations;
-pub use operations::{DiscrepancyPage, DiscrepancyQuery, StorageHealth, verify_backup};
+pub use operations::{
+    DiscrepancyPage, DiscrepancyQuery, StorageHealth, backup_database, verify_backup,
+};
 
 #[cfg(test)]
 mod operations_tests;
+
+mod history;
+pub use history::{
+    HistoryEntry, HistoryPage, Investigation, InvestigationAction, InvestigationReceipt,
+};
+
+#[cfg(test)]
+mod history_tests;
