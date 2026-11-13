@@ -259,14 +259,29 @@ impl EventStore {
         event: PaymentEvent,
         now: i64,
     ) -> Result<(EventReceipt, TransactionTimings), EventError> {
+        let (mut receipts, timings) = self.apply_batch_at(vec![event], now)?;
+        Ok((receipts.remove(0), timings))
+    }
+    /// Atomically applies 1..=256 ordered events with one FULL synchronous commit.
+    /// Any error rolls back the entire batch, including history and delivery jobs.
+    /// Receipts describe each event's state at its position in the batch.
+    pub fn apply_batch(
+        &self,
+        events: Vec<PaymentEvent>,
+    ) -> Result<(Vec<EventReceipt>, TransactionTimings), EventError> {
+        self.apply_batch_at(events, chrono::Utc::now().timestamp_millis())
+    }
+    fn apply_batch_at(
+        &self,
+        events: Vec<PaymentEvent>,
+        now: i64,
+    ) -> Result<(Vec<EventReceipt>, TransactionTimings), EventError> {
+        if events.is_empty() || events.len() > 256 {
+            return Err(EventError::InvalidInput(
+                "Batch must contain 1 through 256 events",
+            ));
+        }
         let prepare = std::time::Instant::now();
-        validate_id(&event.event_id, 128)?;
-        validate_id(&event.payment.id, 256)?;
-        let version = i64::try_from(event.version).ok().filter(|v| *v > 0).ok_or(
-            EventError::InvalidInput("Version must be between 1 and 9223372036854775807"),
-        )?;
-        let canonical = serde_json::to_string(&event).map_err(|_| EventError::CorruptData)?;
-        let payload = serde_json::to_string(&event.payment).map_err(|_| EventError::CorruptData)?;
         let mut connection = self.lock()?;
         let mut timings = TransactionTimings {
             prepare_ms: elapsed_ms(prepare),
@@ -276,12 +291,35 @@ impl EventStore {
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         timings.begin_ms = elapsed_ms(begin);
         let work = std::time::Instant::now();
+        let mut receipts = Vec::with_capacity(events.len());
+        for event in events {
+            receipts.push(self.apply_in_transaction(&tx, event, now)?);
+        }
+        timings.work_ms = elapsed_ms(work);
+        let commit = std::time::Instant::now();
+        tx.commit()?;
+        timings.commit_ms = elapsed_ms(commit);
+        Ok((receipts, timings))
+    }
+    fn apply_in_transaction(
+        &self,
+        tx: &rusqlite::Transaction<'_>,
+        event: PaymentEvent,
+        now: i64,
+    ) -> Result<EventReceipt, EventError> {
+        validate_id(&event.event_id, 128)?;
+        validate_id(&event.payment.id, 256)?;
+        let version = i64::try_from(event.version).ok().filter(|v| *v > 0).ok_or(
+            EventError::InvalidInput("Version must be between 1 and 9223372036854775807"),
+        )?;
+        let canonical = serde_json::to_string(&event).map_err(|_| EventError::CorruptData)?;
+        let payload = serde_json::to_string(&event.payment).map_err(|_| EventError::CorruptData)?;
         if tx.query_row(
             "SELECT EXISTS(SELECT 1 FROM payments WHERE payment_id=?1)",
             [&event.payment.id],
             |r| r.get::<_, bool>(0),
         )? {
-            history::capture(&tx, &event.payment.id, now)?;
+            history::capture(tx, &event.payment.id, now)?;
         }
         let existing: Option<(String, String)> = tx
             .query_row(
@@ -298,13 +336,9 @@ impl EventStore {
                 event_id: event.event_id,
                 duplicate_event: true,
                 outcome: serde_json::from_str(&outcome).map_err(|_| EventError::CorruptData)?,
-                payment: history::capture(&tx, &event.payment.id, now)?,
+                payment: history::capture(tx, &event.payment.id, now)?,
             };
-            timings.work_ms = elapsed_ms(work);
-            let commit = std::time::Instant::now();
-            tx.commit()?;
-            timings.commit_ms = elapsed_ms(commit);
-            return Ok((receipt, timings));
+            return Ok(receipt);
         }
         let previous: Option<(i64, String)> = tx
             .query_row(
@@ -346,14 +380,9 @@ impl EventStore {
             event_id: event.event_id,
             duplicate_event: false,
             outcome,
-            payment: history::capture(&tx, &event.payment.id, now)?,
+            payment: history::capture(tx, &event.payment.id, now)?,
         };
-        // Acknowledgement follows commit; event identity and current state are atomic.
-        timings.work_ms = elapsed_ms(work);
-        let commit = std::time::Instant::now();
-        tx.commit()?;
-        timings.commit_ms = elapsed_ms(commit);
-        Ok((receipt, timings))
+        Ok(receipt)
     }
     pub fn status(&self, payment_id: &str) -> Result<LivePayment, EventError> {
         self.status_at(payment_id, chrono::Utc::now().timestamp_millis())
@@ -482,3 +511,6 @@ pub use archive::{
 
 #[cfg(test)]
 mod workflow_tests;
+
+mod partition;
+pub use partition::PartitionedStore;
