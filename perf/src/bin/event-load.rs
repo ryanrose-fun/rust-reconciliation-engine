@@ -464,7 +464,8 @@ mod tests {
     fn database_audit_checks_retries_counts_and_latest_values() {
         let path =
             std::env::temp_dir().join(format!("event-load-audit-{}.sqlite3", uuid::Uuid::new_v4()));
-        let store = hello_cargo::events::EventStore::open(&path, Duration::from_secs(60)).unwrap();
+        let store =
+            reconcile_cli::events::EventStore::open(&path, Duration::from_secs(60)).unwrap();
         let internal = event("x", "i", "Internal", 1, "Completed");
         for value in [
             internal.clone(),

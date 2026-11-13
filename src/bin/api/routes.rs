@@ -7,8 +7,8 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use hello_cargo::{Payment, ReconciliationError, ReconciliationReport, reconcile_report};
 use http_body_util::BodyExt;
+use reconcile_cli::{Payment, ReconciliationError, ReconciliationReport, reconcile_report};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -79,7 +79,7 @@ impl IntoResponse for ApiError {
 }
 #[derive(Clone)]
 struct AppState {
-    event_store: Option<Arc<hello_cargo::events::EventStore>>,
+    event_store: Option<Arc<reconcile_cli::events::EventStore>>,
     event_queue: Arc<EventQueue>,
     config: Config,
     workers: Arc<Semaphore>,
@@ -96,7 +96,7 @@ pub(super) fn router() -> Router {
 
 #[cfg(test)]
 pub(super) fn configured_router(config: Config) -> Router {
-    let store = Arc::new(hello_cargo::events::EventStore::in_memory(config.event_wait).unwrap());
+    let store = Arc::new(reconcile_cli::events::EventStore::in_memory(config.event_wait).unwrap());
     router_with_store(config, store)
 }
 
@@ -110,14 +110,14 @@ mod event_routes;
 #[cfg(test)]
 pub(super) fn router_with_store(
     config: Config,
-    store: Arc<hello_cargo::events::EventStore>,
+    store: Arc<reconcile_cli::events::EventStore>,
 ) -> Router {
     let queue = Arc::new(EventQueue::new(config.event_queue_capacity));
     router_with_queue(config, store, queue)
 }
 pub(super) fn router_with_queue(
     config: Config,
-    store: Arc<hello_cargo::events::EventStore>,
+    store: Arc<reconcile_cli::events::EventStore>,
     queue: Arc<EventQueue>,
 ) -> Router {
     let state = AppState {

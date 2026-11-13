@@ -2,7 +2,7 @@
 
 A Rust library, command-line tool, and HTTP service for comparing payment snapshots and continuously reconciling versioned source events. It reports all amount, status, and currency differences for each payment, with source evidence and investigation recommendations. It does not execute payments.
 
-Version 0.2.0 is a locally tested pilot candidate, licensed under MIT. The Cargo package remains `hello_cargo`. This public repository uses synthetic payment data; it is not a payment processor or a claim of production deployment.
+Version 0.2.0 is a locally tested pilot candidate, licensed under MIT. The Cargo package and command-line executable are named `reconcile-cli`. This public repository uses synthetic payment data; it is not a payment processor or a claim of production deployment.
 
 [![CI](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/workflows/ci.yml)
 
@@ -57,7 +57,7 @@ Extract the complete archive into a folder and open PowerShell there:
 In another terminal in that folder, run `./examples/test-api.ps1`. The archive contains example data, documentation, and checksums. For file reports:
 
 ```powershell
-.\hello_cargo.exe data/internal.json data/provider.json report.json
+.\reconcile-cli.exe data/internal.json data/provider.json report.json
 ```
 
 The equivalent source command is:

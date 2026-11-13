@@ -397,26 +397,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hello_cargo"
-version = "0.2.0"
-dependencies = [
- "axum",
- "chrono",
- "http-body-util",
- "jsonschema",
- "mime",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2",
- "subtle",
- "tokio",
- "tower",
- "utoipa",
- "uuid",
-]
-
-[[package]]
 name = "http"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -920,6 +900,26 @@ name = "r-efi"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
+
+[[package]]
+name = "reconcile-cli"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "http-body-util",
+ "jsonschema",
+ "mime",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "subtle",
+ "tokio",
+ "tower",
+ "utoipa",
+ "uuid",
+]
 
 [[package]]
 name = "redox_syscall"

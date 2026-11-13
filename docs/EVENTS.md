@@ -91,7 +91,7 @@ Configure the period before starting the server:
 
 ~~~powershell
 $env:RECONCILE_EVENT_WAIT_MS = "30000"
-$env:RECONCILE_DB_PATH = "C:\Users\local-user\rust\hello_cargo\state\reconciliation.sqlite3"
+$env:RECONCILE_DB_PATH = "C:\Users\local-user\rust\rust-reconciliation-engine\state\reconciliation.sqlite3"
 cargo run --bin api
 ~~~
 

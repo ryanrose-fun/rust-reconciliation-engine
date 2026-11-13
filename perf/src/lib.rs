@@ -1,5 +1,5 @@
 //! Benchmark-only alternatives. No production engine code is modified.
-use hello_cargo::{
+use reconcile_cli::{
     Currency, NextAction, Payment, PaymentSource, PaymentStatus, ReconciliationError,
     ReconciliationReport, ReconciliationResult as Finding, ReportEntry, ReportMetadata,
     ReportSummary, SourceReference,
@@ -252,7 +252,7 @@ pub type Implementation =
     fn(&[Payment], &[Payment]) -> Result<ReconciliationReport, ReconciliationError>;
 pub fn implementations() -> [(&'static str, Implementation); 3] {
     [
-        ("engine", hello_cargo::reconcile_report),
+        ("engine", reconcile_cli::reconcile_report),
         ("rust_sorted_merge", sorted_merge),
         ("sqlite_load_index_join", sqlite_join),
     ]
@@ -272,7 +272,7 @@ pub fn normalized(result: &Result<ReconciliationReport, ReconciliationError>) ->
     value
 }
 pub fn check_parity(input: &Input) {
-    let expected = normalized(&hello_cargo::reconcile_report(
+    let expected = normalized(&reconcile_cli::reconcile_report(
         &input.internal_payments,
         &input.provider_payments,
     ));

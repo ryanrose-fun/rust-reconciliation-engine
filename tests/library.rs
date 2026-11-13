@@ -1,9 +1,9 @@
-use hello_cargo::{Payment, PaymentSource, PaymentStatus, ReconciliationError, reconcile_report};
+use reconcile_cli::{Payment, PaymentSource, PaymentStatus, ReconciliationError, reconcile_report};
 
 fn payment(id: &str, amount: u64) -> Payment {
     Payment {
         id: id.into(),
-        currency: hello_cargo::Currency::GBP,
+        currency: reconcile_cli::Currency::GBP,
         amount_minor: amount,
         status: PaymentStatus::Completed,
     }
@@ -77,7 +77,7 @@ fn report_preserves_values_for_both_kinds_of_mismatch() {
     let provider = vec![
         Payment {
             id: "status".into(),
-            currency: hello_cargo::Currency::GBP,
+            currency: reconcile_cli::Currency::GBP,
             amount_minor: 200,
             status: PaymentStatus::Pending,
         },
@@ -115,7 +115,7 @@ fn combined_mismatch_counts_as_one_discrepant_payment() {
     let provider = [
         Payment {
             id: "both".into(),
-            currency: hello_cargo::Currency::GBP,
+            currency: reconcile_cli::Currency::GBP,
             amount_minor: 4500,
             status: PaymentStatus::Pending,
         },
@@ -140,7 +140,7 @@ fn combined_mismatch_counts_as_one_discrepant_payment() {
 
 #[test]
 fn currency_combinations_never_match_and_count_once() {
-    use hello_cargo::{Currency, ReconciliationResult};
+    use reconcile_cli::{Currency, ReconciliationResult};
     for (amount, status, expected) in [
         (
             100,
@@ -211,7 +211,7 @@ fn provenance_is_repeatable_for_inputs_and_changes_with_values() {
     assert!(chrono::DateTime::parse_from_rfc3339(&first.metadata.generated_at).is_ok());
     assert!(uuid::Uuid::parse_str(&first.metadata.report_id).is_ok());
     let changed = [Payment {
-        currency: hello_cargo::Currency::USD,
+        currency: reconcile_cli::Currency::USD,
         ..payment("P1", 100)
     }];
     assert_ne!(

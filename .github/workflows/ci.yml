@@ -21,7 +21,7 @@ jobs:
       - run: cargo +1.99.1 fmt --manifest-path perf/Cargo.toml --check
       - run: cargo +1.99.1 test --locked --manifest-path perf/Cargo.toml
       - run: cargo +1.99.1 clippy --locked --manifest-path perf/Cargo.toml --all-targets -- -D warnings
-      - run: cargo +1.99.1 build --release --locked --bin api --bin hello_cargo
+      - run: cargo +1.99.1 build --release --locked --bin api --bin reconcile-cli
       - name: Event API forced restart recovery
         if: runner.os == 'Windows'
         shell: powershell
@@ -31,7 +31,7 @@ jobs:
           name: binaries-${{ matrix.os }}
           path: |
             target/release/api*
-            target/release/hello_cargo*
+            target/release/reconcile-cli*
           if-no-files-found: error
   container:
     runs-on: ubuntu-latest

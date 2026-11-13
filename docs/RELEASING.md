@@ -1,6 +1,6 @@
 # Release preparation
 
-The repository is MIT licensed. Cargo.lock pins dependencies. Current tested compiler: Rust 1.99.1. The crate name remains hello_cargo; choose a permanent product/package name before publishing to crates.io.
+The repository is MIT licensed. Cargo.lock pins dependencies. Current tested compiler: Rust 1.99.1. The Cargo package and CLI executable are named reconcile-cli; Rust imports use reconcile_cli. Verify registry-name availability before publishing to crates.io.
 
 ## Local checks
 

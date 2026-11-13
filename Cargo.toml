@@ -1,6 +1,6 @@
 [package]
-default-run = "hello_cargo"
-name = "hello_cargo"
+default-run = "reconcile-cli"
+name = "reconcile-cli"
 version = "0.2.0"
 license = "MIT"
 description = "Snapshot payment reconciliation library, CLI, and HTTP service"

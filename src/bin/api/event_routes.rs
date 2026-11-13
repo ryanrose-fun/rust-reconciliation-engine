@@ -1,6 +1,6 @@
 use super::*;
 use axum::extract::{Path, rejection::PathRejection};
-use hello_cargo::events::{EventError, EventReceipt, LivePayment, PaymentEvent};
+use reconcile_cli::events::{EventError, EventReceipt, LivePayment, PaymentEvent};
 
 const MAX_EVENT_BYTES: usize = 16 * 1024;
 
@@ -37,7 +37,7 @@ fn storage_error(error: EventError) -> ApiError {
     };
     ApiError::new(status, code, message)
 }
-fn event_store(state: &AppState) -> Result<Arc<hello_cargo::events::EventStore>, ApiError> {
+fn event_store(state: &AppState) -> Result<Arc<reconcile_cli::events::EventStore>, ApiError> {
     state.event_store.clone().ok_or_else(|| {
         ApiError::new(
             StatusCode::SERVICE_UNAVAILABLE,

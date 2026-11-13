@@ -1,5 +1,5 @@
 //! Reproducible single-thread in-memory benchmark; not an HTTP capacity claim.
-use hello_cargo::{Currency, Payment, PaymentStatus, reconcile_report};
+use reconcile_cli::{Currency, Payment, PaymentStatus, reconcile_report};
 use serde_json::json;
 use std::{hint::black_box, time::Instant};
 fn main() {

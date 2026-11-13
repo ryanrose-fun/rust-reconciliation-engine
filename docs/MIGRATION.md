@@ -1,4 +1,12 @@
-# Migrating from the GBP-only prototype
+# Migration notes
+
+## Package and executable rename
+
+The Cargo package and default CLI executable are now named reconcile-cli (reconcile-cli.exe on Windows). Replace old hello_cargo executable invocations and Cargo package selections with reconcile-cli. Rust imports change from hello_cargo to reconcile_cli; path dependencies should use reconcile-cli as their dependency key.
+
+The container CLI is now /usr/local/bin/reconcile-cli. The API binary remains api (reconcile-api in the container), and cargo run -- <internal.json> <provider.json> <report.json> still works. Payment formats, HTTP routes, and database paths are unchanged. Historical benchmark reports retain the paths recorded when those measurements were made.
+
+## Migrating from the GBP-only prototype
 
 Version 0.2.0 changes payment JSON and Rust types. Before upgrading, stop the old API. Replace each `amount_pence` input field with `amount_minor` and add `"currency":"GBP"` for the old GBP data. Evidence fields similarly change from `internal_amount_pence` / `provider_amount_pence` to `internal_amount_minor` / `provider_amount_minor`.
 

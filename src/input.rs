@@ -1,6 +1,6 @@
 use std::fs;
 
-use hello_cargo::Payment;
+use reconcile_cli::Payment;
 
 pub(crate) fn load_payments(path: &str) -> Result<Vec<Payment>, String> {
     let contents =

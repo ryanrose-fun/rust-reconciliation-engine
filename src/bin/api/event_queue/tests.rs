@@ -166,7 +166,7 @@ async fn full_queue_is_a_readable_http_error_with_retry_after() {
     let queue = Arc::new(EventQueue::new(1));
     let reserved = queue.slots.clone().acquire_many_owned(2).await.unwrap();
     let store = Arc::new(
-        hello_cargo::events::EventStore::in_memory(std::time::Duration::from_secs(30)).unwrap(),
+        reconcile_cli::events::EventStore::in_memory(std::time::Duration::from_secs(30)).unwrap(),
     );
     let app = super::super::router_with_queue(
         super::super::Config::default(),
@@ -192,7 +192,7 @@ async fn full_queue_is_a_readable_http_error_with_retry_after() {
     assert_eq!(value["error"]["code"], "event_queue_full");
     assert!(matches!(
         store.status("p"),
-        Err(hello_cargo::events::EventError::NotFound)
+        Err(reconcile_cli::events::EventError::NotFound)
     ));
     drop(reserved);
 }

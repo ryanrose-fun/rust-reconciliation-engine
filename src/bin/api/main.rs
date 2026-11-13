@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let config = config::Config::from_env()?;
     let database_existed = config.event_db.exists();
-    let store = std::sync::Arc::new(hello_cargo::events::EventStore::open(
+    let store = std::sync::Arc::new(reconcile_cli::events::EventStore::open(
         &config.event_db,
         config.event_wait,
     )?);

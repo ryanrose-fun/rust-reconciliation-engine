@@ -121,7 +121,7 @@ async fn main() {
     );
     let input = dataset(n, "mixed");
     let payload = Bytes::from(serde_json::to_vec(&input).unwrap());
-    let expected = normalized(&hello_cargo::reconcile_report(
+    let expected = normalized(&reconcile_cli::reconcile_report(
         &input.internal_payments,
         &input.provider_payments,
     ))["ok"]
