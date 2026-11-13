@@ -126,7 +126,11 @@ See [the benchmark guide](perf/README.md) for reproducible engine comparisons an
 
 Latest verified changes and measurements: [overload reliability and performance improvements](docs/performance/IMPROVEMENTS.md). Bank-facing release requirements are tracked in [engineering readiness](docs/ENGINEERING-READINESS.md).
 
-## Continuous events
+## Financial ledger example
+
+[Run the double-entry settlement journal](docs/LEDGER.md): exact minor-unit amounts, atomic SQLite postings, persistent idempotency, per-currency balancing, reversing entries and concurrent-write regression tests. Includes a clear discussion of enterprise deployment gaps.
+
+## Continuous event processing
 
 The [event walkthrough](docs/EVENTS.md) explains POST /v1/events, GET /v1/payments/{payment_id}, durable SQLite storage, duplicate protection, stale versions and the waiting deadline. Existing snapshot commands still work.
 Persistent event performance: [run the load test](docs/EVENT-PERFORMANCE.md) and [read the local baseline](docs/performance/event-load-baseline.md).

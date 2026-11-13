@@ -1,7 +1,8 @@
 //! Payment reconciliation shared by command-line and future HTTP clients.
-//! This library operates on in-memory snapshots and performs no file I/O.
+//! Snapshot reconciliation is in-memory; the ledger module provides SQLite persistence.
 mod audit;
 pub mod events;
+pub mod ledger;
 mod payment;
 mod reconciliation;
 mod recovery;
