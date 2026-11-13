@@ -35,3 +35,11 @@ pub fn reconcile_report(
 
 #[cfg(feature = "client")]
 pub mod client;
+
+mod delivery;
+pub use delivery::{DeliveryRecord, DeliverySummary};
+#[cfg(feature = "client")]
+pub mod outbox;
+
+#[cfg(feature = "client")]
+pub mod webhooks;

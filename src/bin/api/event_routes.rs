@@ -4,6 +4,104 @@ use reconcile_cli::events::{EventError, EventReceipt, LivePayment, PaymentEvent}
 
 const MAX_EVENT_BYTES: usize = 16 * 1024;
 
+#[utoipa::path(get,path="/v1/cases",security(("bearerAuth"=[])),
+params(("after"=Option<String>,Query),("limit"=Option<usize>,Query),("owner"=Option<String>,Query),("workflow"=Option<String>,Query),("acknowledged"=Option<bool>,Query),("min_age_ms"=Option<u64>,Query)),
+responses((status=200,description="Active investigation queue; deadline worker materializes overdue cases",body=reconcile_cli::events::CasePage),(status=422,description="Invalid query",body=ErrorEnvelope)))]
+pub(super) async fn cases(
+    State(state): State<AppState>,
+    query: Result<
+        axum::extract::Query<reconcile_cli::events::CaseQuery>,
+        axum::extract::rejection::QueryRejection,
+    >,
+) -> Result<Response, ApiError> {
+    let axum::extract::Query(query) = query.map_err(|_| {
+        ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_filter",
+            "Invalid case query",
+        )
+    })?;
+    let store = event_store(&state)?;
+    let (value, stages) = state
+        .event_queue
+        .run(state.workers.clone(), move || {
+            Ok((
+                store.cases(query).map_err(storage_error)?,
+                Default::default(),
+            ))
+        })
+        .await?;
+    no_cache(value, stages)
+}
+#[utoipa::path(post,path="/v1/payments/{payment_id}/case",security(("bearerAuth"=[])),
+params(("payment_id"=String,Path)),request_body=reconcile_cli::events::CaseUpdate,
+responses((status=200,description="Assignment and workflow recorded without changing payment evidence",body=reconcile_cli::events::InvestigationReceipt),(status=403,description="Investigator role required",body=ErrorEnvelope),(status=409,description="Case or evidence changed",body=ErrorEnvelope)))]
+pub(super) async fn update_case(
+    State(state): State<AppState>,
+    path: Result<Path<String>, PathRejection>,
+    request: Request,
+) -> Result<Response, ApiError> {
+    let Path(id) = path.map_err(|_| {
+        ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_event",
+            "Invalid payment ID",
+        )
+    })?;
+    let actor = request
+        .extensions()
+        .get::<crate::permissions::Principal>()
+        .cloned()
+        .unwrap_or_else(crate::permissions::Principal::legacy)
+        .id;
+    let media = request
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<mime::Mime>().ok());
+    if !media.is_some_and(|m| {
+        m.type_() == mime::APPLICATION
+            && (m.subtype() == mime::JSON || m.suffix() == Some(mime::JSON))
+    }) {
+        return Ok(reject_upload(
+            &state,
+            request,
+            ApiError::new(
+                StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                "unsupported_media_type",
+                "Use application/json",
+            ),
+        )
+        .await);
+    }
+    let bytes = axum::body::to_bytes(
+        request.into_body(),
+        MAX_EVENT_BYTES.min(state.config.max_body),
+    )
+    .await
+    .map_err(|_| {
+        ApiError::new(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "request_too_large",
+            "Case body unreadable or too large",
+        )
+    })?;
+    let input = serde_json::from_slice(&bytes).map_err(json_error)?;
+    let store = event_store(&state)?;
+    let (value, stages) = state
+        .event_queue
+        .run(state.workers.clone(), move || {
+            Ok((
+                store
+                    .update_case(&id, &actor, input)
+                    .map_err(storage_error)?,
+                Default::default(),
+            ))
+        })
+        .await?;
+    no_cache(value, stages)
+}
+
 #[derive(Deserialize, Default)]
 #[serde(default, deny_unknown_fields)]
 pub(super) struct HistoryQuery {
@@ -127,7 +225,7 @@ pub(super) async fn investigate(
     no_cache(value, stages)
 }
 
-fn storage_error(error: EventError) -> ApiError {
+pub(super) fn storage_error(error: EventError) -> ApiError {
     let (status, code, message) = match error {
         EventError::InvalidInput(message) => {
             (StatusCode::UNPROCESSABLE_ENTITY, "invalid_event", message)

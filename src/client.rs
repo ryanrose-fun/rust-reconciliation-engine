@@ -63,6 +63,15 @@ pub struct EventClient {
     slots: Arc<tokio::sync::Semaphore>,
 }
 impl EventClient {
+    pub(crate) fn binding(&self) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hash = Sha256::new();
+        hash.update(self.endpoint.as_str());
+        hash.update([0]);
+        hash.update(&self.token);
+        format!("{:x}", hash.finalize())
+    }
+
     /// HTTPS is required except for localhost/loopback development. Redirects
     /// are disabled so credentials cannot be forwarded to another destination.
     pub fn new(base: &str, token: String, policy: RetryPolicy) -> Result<Self, &'static str> {

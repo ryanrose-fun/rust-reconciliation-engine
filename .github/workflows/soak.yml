@@ -31,9 +31,13 @@ jobs:
           SOAK_ROUNDS: ${{ inputs.rounds }}
         shell: bash
         run: python scripts/load-test-events.py --seconds "$SOAK_SECONDS" --rounds "$SOAK_ROUNDS" --report soak-report.json
+      - name: Storage, history, notification enqueue, deadlines and restore costs
+        run: cargo +1.99.1 run --release --locked --example operations_benchmark -- target/storage-evidence 1000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: soak-${{ matrix.os }}
-          path: soak-report.json
+          path: |
+            soak-report.json
+            target/storage-evidence/report.json
           if-no-files-found: warn

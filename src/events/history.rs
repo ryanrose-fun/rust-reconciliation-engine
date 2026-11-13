@@ -55,7 +55,31 @@ pub(super) fn capture(
             "UPDATE payment_history SET revision=?1 WHERE sequence=?1",
             [revision],
         )?;
-        tx.execute("INSERT INTO case_state(payment_id,status,signature,revision) VALUES(?1,?2,?3,?4) ON CONFLICT(payment_id) DO UPDATE SET status=excluded.status,signature=excluded.signature,revision=excluded.revision",params![id,status,signature,revision])?;
+        let opened = if is_issue(&status) {
+            Some(effective)
+        } else {
+            None
+        };
+        tx.execute("INSERT INTO case_state(payment_id,status,signature,revision,opened_at) VALUES(?1,?2,?3,?4,?5) ON CONFLICT(payment_id) DO UPDATE SET status=excluded.status,signature=excluded.signature,revision=excluded.revision,opened_at=CASE WHEN excluded.opened_at IS NULL THEN NULL ELSE coalesce(case_state.opened_at,excluded.opened_at) END",params![id,status,signature,revision,opened])?;
+        if matches!(kind, "Opened" | "Changed" | "Resolved")
+            || kind == "Baseline" && is_issue(&status)
+        {
+            let enabled: bool = tx.query_row(
+                "SELECT EXISTS(SELECT 1 FROM notification_settings)",
+                [],
+                |r| r.get(0),
+            )?;
+            if enabled {
+                let notification_id = uuid::Uuid::new_v4().to_string();
+                let payload=serde_json::json!({"id":notification_id,"kind":kind,"revision":revision,"recorded_at_ms":now,"effective_at_ms":effective,"payment":current}).to_string();
+                crate::delivery::enqueue(tx, &notification_id, &payload, now)?;
+            }
+        }
+    }
+    if matches!(status.as_str(), "AwaitingInternal" | "AwaitingProvider") {
+        tx.execute("INSERT INTO pending_deadlines(payment_id,deadline) VALUES(?1,?2) ON CONFLICT(payment_id) DO NOTHING",params![id,current.waiting_until_ms])?;
+    } else {
+        tx.execute("DELETE FROM pending_deadlines WHERE payment_id=?1", [id])?;
     }
     Ok(current)
 }

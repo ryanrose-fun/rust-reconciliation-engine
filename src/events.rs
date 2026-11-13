@@ -213,14 +213,21 @@ impl EventStore {
                 PRAGMA user_version=1;
             ",
             )?;
-        } else if version != 1 && version != 2 {
+        } else if version != 1 && version != 2 && version != 3 {
             return Err(EventError::UnsupportedSchema);
         }
         if version < 2 {
             history::migrate(&tx)?;
         }
-        tx.prepare("SELECT status,signature,revision FROM case_state LIMIT 0")?;
+        if version < 3 {
+            workflow::migrate(&tx)?;
+        }
+        tx.prepare("SELECT status,signature,revision,opened_at FROM case_state LIMIT 0")?;
         tx.prepare("SELECT sequence,note_id,request FROM payment_history LIMIT 0")?;
+        tx.prepare("SELECT id,payload,state,attempts,available_at,lease_token,lease_until,last_error,created_at,completed_at FROM delivery_jobs LIMIT 0")?;
+        tx.prepare("SELECT owner,workflow,version FROM case_workflow LIMIT 0")?;
+        tx.prepare("SELECT payment_id,deadline FROM pending_deadlines LIMIT 0")?;
+        tx.prepare("SELECT endpoint FROM notification_settings LIMIT 0")?;
         // Verify expected tables/columns before accepting traffic.
         tx.prepare("SELECT p.payment_id,p.first_seen_at_ms,p.waiting_until_ms,s.version,s.payload,s.event_id,s.received_at_ms,e.outcome,e.received_at_ms,e.payload FROM payments p LEFT JOIN source_state s ON s.payment_id=p.payment_id LEFT JOIN event_log e ON e.event_id=s.event_id LIMIT 0")?;
         tx.commit()?;
@@ -229,7 +236,7 @@ impl EventStore {
             wait_ms,
         })
     }
-    fn lock(&self) -> Result<MutexGuard<'_, Connection>, EventError> {
+    pub(crate) fn lock(&self) -> Result<MutexGuard<'_, Connection>, EventError> {
         self.connection.try_lock().map_err(|e| match e {
             TryLockError::WouldBlock => EventError::Busy,
             TryLockError::Poisoned(_) => EventError::CorruptData,
@@ -464,3 +471,14 @@ pub use history::{
 
 #[cfg(test)]
 mod history_tests;
+
+mod workflow;
+pub use workflow::{CaseEntry, CasePage, CaseQuery, CaseUpdate, WorkflowStatus};
+
+mod archive;
+pub use archive::{
+    ArchiveManifest, RecoveryDrill, archive_database, recovery_drill, verify_archive,
+};
+
+#[cfg(test)]
+mod workflow_tests;

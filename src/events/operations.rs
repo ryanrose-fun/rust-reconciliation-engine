@@ -171,12 +171,19 @@ pub fn verify_backup(path: &Path) -> Result<(), EventError> {
         return Err(EventError::CorruptData);
     }
     let version: i64 = c.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-    if version != 1 && version != 2 {
+    if version != 1 && version != 2 && version != 3 {
         return Err(EventError::UnsupportedSchema);
     }
-    if version == 2 {
+    if version >= 2 {
         c.prepare("SELECT sequence,note_id,request FROM payment_history LIMIT 0")?;
         c.prepare("SELECT status,signature,revision FROM case_state LIMIT 0")?;
+    }
+    if version == 3 {
+        c.prepare("SELECT id,payload,state,attempts,available_at,lease_token,lease_until,last_error,created_at,completed_at FROM delivery_jobs LIMIT 0")?;
+        c.prepare("SELECT owner,workflow,version FROM case_workflow LIMIT 0")?;
+        c.prepare("SELECT payment_id,deadline FROM pending_deadlines LIMIT 0")?;
+        c.prepare("SELECT endpoint FROM notification_settings LIMIT 0")?;
+        c.prepare("SELECT opened_at FROM case_state LIMIT 0")?;
     }
     let violations: i64 =
         c.query_row("SELECT count(*) FROM pragma_foreign_key_check", [], |r| {
