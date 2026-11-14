@@ -301,6 +301,51 @@ impl EventStore {
         timings.commit_ms = elapsed_ms(commit);
         Ok((receipts, timings))
     }
+    /// Group unrelated requests in one durable commit. Business conflicts roll
+    /// back only their savepoint; storage failures abort the whole transaction.
+    pub fn apply_group(
+        &self,
+        events: Vec<PaymentEvent>,
+    ) -> Result<(Vec<Result<EventReceipt, EventError>>, TransactionTimings), EventError> {
+        if events.is_empty() || events.len() > 256 {
+            return Err(EventError::InvalidInput(
+                "Group must contain 1 through 256 events",
+            ));
+        }
+        let now = chrono::Utc::now().timestamp_millis();
+        let prepare = std::time::Instant::now();
+        let mut connection = self.lock()?;
+        let mut timings = TransactionTimings {
+            prepare_ms: elapsed_ms(prepare),
+            ..Default::default()
+        };
+        let begin = std::time::Instant::now();
+        let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        timings.begin_ms = elapsed_ms(begin);
+        let work = std::time::Instant::now();
+        let mut results = Vec::with_capacity(events.len());
+        for event in events {
+            tx.execute_batch("SAVEPOINT request")?;
+            let result = self.apply_in_transaction(&tx, event, now);
+            match &result {
+                Ok(_) => tx.execute_batch("RELEASE request")?,
+                Err(
+                    EventError::InvalidInput(_)
+                    | EventError::EventIdConflict
+                    | EventError::VersionConflict,
+                ) => {
+                    tx.execute_batch("ROLLBACK TO request; RELEASE request")?;
+                }
+                Err(_) => return Err(result.expect_err("error branch")),
+            }
+            results.push(result);
+        }
+        timings.work_ms = elapsed_ms(work);
+        let commit = std::time::Instant::now();
+        tx.commit()?;
+        timings.commit_ms = elapsed_ms(commit);
+        Ok((results, timings))
+    }
     fn apply_in_transaction(
         &self,
         tx: &rusqlite::Transaction<'_>,
@@ -513,4 +558,4 @@ pub use archive::{
 mod workflow_tests;
 
 mod partition;
-pub use partition::PartitionedStore;
+pub use partition::{PartitionedStore, partition_index};

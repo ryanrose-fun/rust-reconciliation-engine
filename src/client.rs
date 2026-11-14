@@ -146,6 +146,7 @@ impl EventClient {
                     .post(self.endpoint.clone())
                     .bearer_auth(&self.token)
                     .header("content-type", "application/json")
+                    .header("x-reconcile-payment-id", routing_header(&event.payment.id))
                     .body(bytes.clone())
                     .send()
                     .await
@@ -224,4 +225,16 @@ fn retry_after(value: &str) -> Option<Duration> {
             .saturating_sub(chrono::Utc::now().timestamp_millis())
             .max(0) as u64,
     ))
+}
+
+fn routing_header(id: &str) -> String {
+    id.bytes()
+        .map(|b| {
+            if b.is_ascii_alphanumeric() || b"-._~".contains(&b) {
+                (b as char).to_string()
+            } else {
+                format!("%{b:02X}")
+            }
+        })
+        .collect()
 }

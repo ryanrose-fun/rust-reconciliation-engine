@@ -855,6 +855,51 @@
         }
       }
     },
+    "/metrics": {
+      "get": {
+        "operationId": "export_metrics",
+        "parameters": [
+          {
+            "description": "Required in partition mode. Zero-based index from GET /v1/partitions. Response and pagination cover only this partition.",
+            "in": "header",
+            "name": "X-Reconcile-Partition",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Tenant Prometheus metrics, reset on restart"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid credential"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": []
+      }
+    },
     "/openapi.json": {
       "get": {
         "responses": {
@@ -915,6 +960,16 @@
             "required": false,
             "schema": {
               "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Required in partition mode. Zero-based index from GET /v1/partitions. Response and pagination cover only this partition.",
+            "in": "header",
+            "name": "X-Reconcile-Partition",
+            "required": false,
+            "schema": {
               "minimum": 0,
               "type": "integer"
             }
@@ -1006,6 +1061,16 @@
               "minimum": 0,
               "type": "integer"
             }
+          },
+          {
+            "description": "Required in partition mode. Zero-based index from GET /v1/partitions. Response and pagination cover only this partition.",
+            "in": "header",
+            "name": "X-Reconcile-Partition",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -1043,6 +1108,17 @@
     "/v1/events": {
       "post": {
         "operationId": "ingest",
+        "parameters": [
+          {
+            "description": "Required in partition mode: percent-encoded UTF-8 payment ID, equal to body payment.id. event_id must start with lowercase SHA256(payment.id) plus colon and a stable unique suffix.",
+            "in": "header",
+            "name": "X-Reconcile-Payment-Id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1182,6 +1258,24 @@
         ],
         "tags": [
           "event_routes"
+        ]
+      }
+    },
+    "/v1/partitions": {
+      "get": {
+        "description": "Available for partition-enabled tenants. Lists partition indices for explicit scoped scans.",
+        "responses": {
+          "200": {
+            "description": "Partition count, routing and event identity contract"
+          },
+          "404": {
+            "description": "Partition mode is not enabled"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ]
       }
     },
@@ -1640,6 +1734,18 @@
     "/v1/storage-health": {
       "get": {
         "operationId": "health",
+        "parameters": [
+          {
+            "description": "Required in partition mode. Zero-based index from GET /v1/partitions. Response and pagination cover only this partition.",
+            "in": "header",
+            "name": "X-Reconcile-Partition",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {

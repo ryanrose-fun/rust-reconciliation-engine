@@ -50,3 +50,7 @@ required-features=["client"]
 name="webhook-worker"
 path="src/bin/webhook-worker.rs"
 required-features=["client"]
+
+[[example]]
+name = "partitioned_integration"
+required-features = ["client"]

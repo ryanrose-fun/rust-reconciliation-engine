@@ -59,19 +59,28 @@ impl PartitionedStore {
         })
     }
     pub fn partition_index(&self, payment_id: &str) -> usize {
-        let mut hash = Sha256::new();
-        hash.update((self.tenant.len() as u64).to_be_bytes());
-        hash.update(self.tenant.as_bytes());
-        hash.update(payment_id.as_bytes());
-        let bytes: [u8; 8] = hash.finalize()[..8].try_into().expect("SHA256 length");
-        (u64::from_be_bytes(bytes) % self.stores.len() as u64) as usize
+        partition_index(&self.tenant, payment_id, self.stores.len())
     }
+    pub fn into_stores(self) -> Vec<EventStore> {
+        self.stores
+    }
+
     /// Callers must send batches containing only this partition's payments.
     /// Independent partitions may be processed concurrently by bounded workers.
     pub fn for_payment(&self, payment_id: &str) -> &EventStore {
         &self.stores[self.partition_index(payment_id)]
     }
 }
+/// Stable routing for an already validated layout (count must be nonzero).
+pub fn partition_index(tenant: &str, payment_id: &str, count: usize) -> usize {
+    let mut hash = Sha256::new();
+    hash.update((tenant.len() as u64).to_be_bytes());
+    hash.update(tenant.as_bytes());
+    hash.update(payment_id.as_bytes());
+    let bytes: [u8; 8] = hash.finalize()[..8].try_into().expect("SHA256 length");
+    (u64::from_be_bytes(bytes) % count as u64) as usize
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

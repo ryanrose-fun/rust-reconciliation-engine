@@ -1,6 +1,6 @@
 # Group commit foundation (work in progress)
 
-This branch implements the storage foundation of the six-part scaling programme. It does not complete the programme or change HTTP deployment behaviour.
+This document records the initial storage foundation and its exploratory benchmark. The subsequent [partitioned API integration](partitioned-integration.md) connects group commit and fixed partitions to live HTTP ingestion; it does not complete the broader six-part scaling programme.
 
 ## Implemented
 
@@ -27,8 +27,8 @@ Exploratory Windows results in `group-commit-local.json`: one-event commits 603â
 
 ## Outstanding acceptance gates
 
-1. HTTP group commit: bounded microbatch queue, per-request error isolation, cancellation and graceful drain; p99 including accumulation delay.
-2. Partitioned service: source authorization, global event identity contract, tenant-bound routing, history/case pagination, migrations, background deadlines, per-partition metrics and concurrent benchmarks.
+1. HTTP group commit is implemented; runtime validation and p99 measurements including accumulation delay remain.
+2. Opt-in partitioned service routing, source authorization, payment-bound event identity, per-partition pagination, deadlines and metrics are implemented. Migration tooling and concurrent benchmarks remain.
 3. Kafka ingestion: real broker integration, durable offset handling, rebalance/replay tests and bounded buffering.
 4. Replication/failover: select and implement a replicated storage design, fencing and failure-injection tests. SQLite partition files alone do not provide this.
 5. Retention: verified archival plus safe reclamation while retaining idempotency and audit guarantees, tested against aged large datasets.

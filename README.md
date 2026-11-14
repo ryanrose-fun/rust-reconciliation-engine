@@ -143,3 +143,11 @@ Persistent event performance: [run the load test](docs/EVENT-PERFORMANCE.md) and
 Bounded event queue: [behaviour and timings](docs/EVENT-QUEUE.md), with [before/after measurements](docs/performance/event-queue-comparison.md).
 
 Engineering trade-offs: [SQLite durability, bounded queues, idempotency and version ordering](docs/DECISIONS.md).
+
+## Continuous checkout/provider integration
+
+The [partitioned integration guide](docs/partitioned-integration.md) explains the simulated checkout/provider flow, signed alerts, group commits, fixed tenant partitions and routing contract. To run it when ready:
+
+```powershell
+.\examples\run-partitioned-integration.ps1 -Partitions 4
+```

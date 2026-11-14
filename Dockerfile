@@ -3,6 +3,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY examples/reconciliation_lifecycle.rs ./examples/reconciliation_lifecycle.rs
+COPY examples/partitioned_integration.rs ./examples/partitioned_integration.rs
 RUN cargo build --release --locked --bin api --bin reconcile-cli --bin maintenance
 FROM debian:bookworm-slim
 RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --no-create-home app && mkdir -p /var/lib/reconcile && chown 10001:10001 /var/lib/reconcile

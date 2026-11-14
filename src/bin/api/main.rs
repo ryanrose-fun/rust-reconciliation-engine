@@ -1,6 +1,7 @@
 use axum::serve::ListenerExt;
 mod config;
 mod metrics;
+mod partition_api;
 mod permissions;
 mod request_log;
 mod routes;

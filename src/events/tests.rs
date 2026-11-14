@@ -430,3 +430,27 @@ fn batch_failure_leaves_history_and_source_state_unchanged() {
     assert!(store.status("PAY-001").unwrap().provider.is_none());
     assert!(!store.apply(b).unwrap().duplicate_event);
 }
+
+#[test]
+fn group_commit_isolates_conflicts_and_preserves_order() {
+    let store = memory();
+    let a = event(
+        "group-i",
+        EventSource::Internal,
+        1,
+        PaymentStatus::Completed,
+    );
+    let mut conflict = a.clone();
+    conflict.payment.amount_minor = 1;
+    let b = event(
+        "group-p",
+        EventSource::Provider,
+        1,
+        PaymentStatus::Completed,
+    );
+    let (results, _) = store.apply_group(vec![a.clone(), conflict, b, a]).unwrap();
+    assert!(results[0].is_ok());
+    assert!(matches!(results[1], Err(EventError::EventIdConflict)));
+    assert_eq!(status(&results[2].as_ref().unwrap().payment), "Matched");
+    assert!(results[3].as_ref().unwrap().duplicate_event);
+}
