@@ -206,6 +206,8 @@ fn run(
     rx: mpsc::Receiver<Command>,
     ready: &mpsc::SyncSender<Result<(), String>>,
 ) -> Result<(), String> {
+    let startup = std::time::Instant::now();
+    let profile = std::env::var_os("RECONCILE_GPU_PROFILE").is_some();
     let _lock = std::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -266,6 +268,8 @@ fn run(
     let adapter = gpu.info.name.clone();
     let mut worker = Worker::new(&gpu, capacity, MAX_EVENTS);
     let mut committed = 0i64;
+    let initialized_ms = startup.elapsed().as_secs_f64() * 1000.0;
+    let mut replay_compute_ms = 0.0;
     {
         let mut statement = db
             .prepare(
@@ -287,7 +291,9 @@ fn run(
             if request.request_id != id {
                 return Err("GPU journal request ID mismatch".into());
             }
+            let compute_start = std::time::Instant::now();
             let got = compute(&mut worker, &request)?;
+            replay_compute_ms += compute_start.elapsed().as_secs_f64() * 1000.0;
             let expected: Computed = serde_json::from_str(&stored).map_err(|e| e.to_string())?;
             if got != expected {
                 return Err("GPU recovery result mismatch; refusing readiness".into());
@@ -307,6 +313,12 @@ fn run(
             }
             committed = seq;
         }
+    }
+    if profile {
+        eprintln!(
+            "GPU_PROFILE {}",
+            serde_json::json!({"phase":"startup","batches":committed,"initialized_ms":initialized_ms,"total_ms":startup.elapsed().as_secs_f64()*1000.0,"replay_compute_ms":replay_compute_ms})
+        );
     }
     eprintln!("GPU ready: {adapter}; recovered {committed} committed batches");
     ready.send(Ok(())).map_err(|_| "Startup cancelled")?;
@@ -361,6 +373,7 @@ fn apply(
     worker: &mut Worker<'_>,
     request: &Submit,
 ) -> Result<Reply, ApplyError> {
+    let start = std::time::Instant::now();
     validate(request).map_err(ApplyError::User)?;
     let input = canonical(request);
     let existing: Option<(i64, String, String)> = db
@@ -393,7 +406,11 @@ fn apply(
             return Err(ApplyError::User(Error::Conflict));
         }
     }
+    let identity_ms = start.elapsed().as_secs_f64() * 1000.0;
+    let compute_start = std::time::Instant::now();
     let computed = compute(worker, request).map_err(|e| ApplyError::User(Error::Invalid(e)))?;
+    let compute_ms = compute_start.elapsed().as_secs_f64() * 1000.0;
+    let journal_start = std::time::Instant::now();
     // After GPU mutation, ANY storage failure is fatal to this worker. Never serve
     // potentially uncommitted GPU state: restart reconstructs only committed inputs.
     let tx = db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
@@ -413,7 +430,16 @@ fn apply(
             params![event.event_id, canonical(event)],
         )?;
     }
+    let journal_ms = journal_start.elapsed().as_secs_f64() * 1000.0;
+    let commit_start = std::time::Instant::now();
     tx.commit()?;
+    let commit_ms = commit_start.elapsed().as_secs_f64() * 1000.0;
+    if std::env::var_os("RECONCILE_GPU_PROFILE").is_some() {
+        eprintln!(
+            "GPU_PROFILE {}",
+            serde_json::json!({"phase":"apply","sequence":seq,"events":request.events.len(),"identity_ms":identity_ms,"compute_ms":compute_ms,"journal_ms":journal_ms,"commit_ms":commit_ms,"total_ms":start.elapsed().as_secs_f64()*1000.0})
+        );
+    }
     Ok(Reply {
         request_id: request.request_id.clone(),
         commit_sequence: seq,

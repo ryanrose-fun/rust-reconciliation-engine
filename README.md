@@ -14,6 +14,7 @@ RTX 5070 Laptop GPU on Windows. Its scope and remaining engineering work are doc
 - [Run the authenticated GPU API and restart demonstration](docs/GPU_API.md)
 - [Architecture and acknowledgement/recovery guarantees](docs/GPU_ARCHITECTURE.md)
 - [Resident GPU worker: one million payments and incremental update results](docs/performance/gpu-resident.md)
+- [Durable GPU API: one million payments, HTTP latency and restart recovery](docs/performance/gpu-api-million.md)
 - [Fair CPU/GPU comparison](docs/performance/cpu-gpu-comparison.md) and [multicore baseline](docs/performance/multicore-comparison.md)
 - [Live GPU crash/recovery acceptance test](tests/gpu_api_recovery.rs)
 - [Rust compute library](perf/gpu/src/lib.rs), [GPU shader](perf/gpu/src/resident.wgsl), and [durable GPU actor](src/bin/api/gpu_service.rs)
