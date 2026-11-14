@@ -1,0 +1,18 @@
+name: GPU hardware acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gpu-hardware-acceptance
+  cancel-in-progress: false
+jobs:
+  hardware:
+    # Manual only: never execute untrusted pull-request code on a private GPU host.
+    runs-on: [self-hosted, Windows, gpu]
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy
+      - run: cargo +1.99.1 test --locked --features gpu,client --test gpu_api_recovery -- --ignored --nocapture
+      - run: cargo +1.99.1 fmt --manifest-path perf/gpu/Cargo.toml --check
+      - run: cargo +1.99.1 clippy --locked --manifest-path perf/gpu/Cargo.toml --all-targets -- -D warnings

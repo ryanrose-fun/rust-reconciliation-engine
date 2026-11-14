@@ -1,0 +1,327 @@
+{
+  "adapter": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "boundary": "Same typed string-ID input to identical owned ID/result rows and duplicate counters. Fresh preparation, allocation, scratch destruction, output creation and GPU transfers included. Multicore creates/joins scoped threads inside each timed call; no pool initialization excluded. GPU device reused; fresh buffers every batch. Fixture creation, output destruction and parity verification excluded equally. No HTTP, JSON, database or full evidence report.",
+  "every_output_verified": true,
+  "gpu_initialization_ms": 2457.1931999999997,
+  "input_records": 2000000,
+  "input_sha256": "d3edde507dcc6197d367d7d1bd19b66f6d3baf1588c1e905af11689abe311c75",
+  "logical_processors": 24,
+  "order": [
+    [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      0
+    ],
+    [
+      2,
+      3,
+      4,
+      5,
+      6,
+      0,
+      1
+    ],
+    [
+      3,
+      4,
+      5,
+      6,
+      0,
+      1,
+      2
+    ],
+    [
+      4,
+      5,
+      6,
+      0,
+      1,
+      2,
+      3
+    ],
+    [
+      5,
+      6,
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    [
+      6,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    [
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    [
+      0,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    [
+      1,
+      0,
+      6,
+      5,
+      4,
+      3,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      6,
+      5,
+      4,
+      3
+    ],
+    [
+      3,
+      2,
+      1,
+      0,
+      6,
+      5,
+      4
+    ],
+    [
+      4,
+      3,
+      2,
+      1,
+      0,
+      6,
+      5
+    ],
+    [
+      5,
+      4,
+      3,
+      2,
+      1,
+      0,
+      6
+    ]
+  ],
+  "payments_per_source": 1000000,
+  "result_sha256": "8da38dc367024f39a3bce00c0aee1a9182b4d28d9668beb9712971d82863b981",
+  "results": [
+    {
+      "first_use_ms": 325.9551,
+      "implementation": "cpu_direct_string_join",
+      "warm": {
+        "max_ms": 335.11429999999996,
+        "median_ms": 298.22885,
+        "min_ms": 286.45,
+        "samples_ms": [
+          307.55850000000004,
+          292.82750000000004,
+          286.45,
+          298.32140000000004,
+          312.5129,
+          301.391,
+          298.1363,
+          296.1224,
+          299.02099999999996,
+          335.11429999999996,
+          289.2595,
+          299.04900000000004,
+          288.6552,
+          296.89369999999997
+        ]
+      }
+    },
+    {
+      "first_use_ms": 305.6381,
+      "implementation": "cpu_packed_join",
+      "warm": {
+        "max_ms": 369.16130000000004,
+        "median_ms": 295.65005,
+        "min_ms": 282.2319,
+        "samples_ms": [
+          369.16130000000004,
+          296.3729,
+          290.35290000000003,
+          282.2319,
+          311.4914,
+          291.45919999999995,
+          312.41560000000004,
+          283.4643,
+          342.8794,
+          315.9957,
+          338.8333,
+          292.1158,
+          287.4364,
+          294.9272
+        ]
+      }
+    },
+    {
+      "first_use_ms": 354.461,
+      "implementation": "gpu_packed_join",
+      "warm": {
+        "max_ms": 382.906,
+        "median_ms": 313.9377,
+        "min_ms": 272.6904,
+        "samples_ms": [
+          286.08050000000003,
+          329.3718,
+          272.6904,
+          313.5179,
+          314.3575,
+          325.7389,
+          367.5811,
+          311.5134,
+          382.906,
+          306.0928,
+          322.0549,
+          311.74800000000005,
+          310.0109,
+          330.913
+        ]
+      }
+    },
+    {
+      "first_use_ms": 505.30580000000003,
+      "implementation": "cpu_sharded_1",
+      "warm": {
+        "max_ms": 468.28520000000003,
+        "median_ms": 441.72635,
+        "min_ms": 421.9717,
+        "samples_ms": [
+          468.28520000000003,
+          448.363,
+          453.38309999999996,
+          443.0036,
+          435.3691,
+          446.8066,
+          454.6119,
+          434.66510000000005,
+          440.7577,
+          438.89669999999995,
+          421.9717,
+          438.598,
+          424.4742,
+          442.695
+        ]
+      }
+    },
+    {
+      "first_use_ms": 203.4124,
+      "implementation": "cpu_sharded_4",
+      "warm": {
+        "max_ms": 209.68359999999998,
+        "median_ms": 182.7501,
+        "min_ms": 174.2785,
+        "samples_ms": [
+          209.68359999999998,
+          186.7257,
+          186.9248,
+          197.6532,
+          178.30499999999998,
+          185.3628,
+          184.0445,
+          184.31910000000002,
+          181.4557,
+          175.41590000000002,
+          175.4974,
+          177.9586,
+          175.20559999999998,
+          174.2785
+        ]
+      }
+    },
+    {
+      "first_use_ms": 161.20870000000002,
+      "implementation": "cpu_sharded_8",
+      "warm": {
+        "max_ms": 154.80169999999998,
+        "median_ms": 140.44475,
+        "min_ms": 125.47340000000001,
+        "samples_ms": [
+          136.6035,
+          143.90120000000002,
+          152.09810000000002,
+          139.726,
+          141.1635,
+          147.8825,
+          153.9717,
+          142.9675,
+          139.465,
+          154.80169999999998,
+          136.1909,
+          131.25539999999998,
+          125.9285,
+          125.47340000000001
+        ]
+      }
+    },
+    {
+      "first_use_ms": 137.305,
+      "implementation": "cpu_sharded_16",
+      "warm": {
+        "max_ms": 149.6735,
+        "median_ms": 128.39729999999997,
+        "min_ms": 119.9677,
+        "samples_ms": [
+          123.27839999999999,
+          137.9329,
+          123.49010000000001,
+          128.27259999999998,
+          145.0921,
+          119.9677,
+          123.56930000000001,
+          126.5093,
+          121.9291,
+          128.522,
+          140.5853,
+          139.4492,
+          149.6735,
+          132.5445
+        ]
+      }
+    }
+  ],
+  "schema": "multicore-equal-boundary-v1",
+  "source_sha256": "349379cdb476805fd6a48c5327957b962387e68632cc6b7d4d2bc45b403f5642",
+  "trials_per_path": 14,
+  "unique_ids": 1010000,
+  "warmups_per_path": 2,
+  "workers": [
+    1,
+    4,
+    8,
+    16
+  ]
+}

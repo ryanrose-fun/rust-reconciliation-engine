@@ -110,6 +110,9 @@ pub(super) use event_queue::EventQueue;
 
 #[path = "event_routes.rs"]
 mod event_routes;
+#[cfg(feature = "gpu")]
+#[path = "gpu_api.rs"]
+mod gpu_api;
 
 #[cfg(test)]
 pub(super) fn router_with_store(
@@ -177,7 +180,10 @@ pub(super) fn router_with_queue(
             }
         });
     }
-    Router::new()
+    let router = Router::new();
+    #[cfg(feature = "gpu")]
+    let router = router.merge(gpu_api::routes());
+    router
         .route("/v1/cases", get(event_routes::cases))
         .route(
             "/v1/payments/{payment_id}/case",
@@ -672,7 +678,14 @@ fn json_error(error: serde_json::Error) -> ApiError {
 )]
 struct ApiDoc;
 pub(super) fn api_doc() -> serde_json::Value {
-    let mut doc = serde_json::to_value(ApiDoc::openapi()).unwrap();
+    let api = ApiDoc::openapi();
+    #[cfg(feature = "gpu")]
+    let api = {
+        let mut api = api;
+        api.merge(gpu_api::GpuDoc::openapi());
+        api
+    };
+    let mut doc = serde_json::to_value(api).unwrap();
     doc["components"]["securitySchemes"] = json!({"bearerAuth":{"type":"http","scheme":"bearer"}});
     // JSON integers can represent u64 exactly; do not advertise signed int64.
     for (schema, field) in [
@@ -1029,8 +1042,12 @@ mod tests {
     }
     #[test]
     fn checked_in_openapi_matches_generated_contract() {
+        #[cfg(not(feature = "gpu"))]
         let saved: serde_json::Value =
             serde_json::from_str(include_str!("../../../docs/openapi.json")).unwrap();
+        #[cfg(feature = "gpu")]
+        let saved: serde_json::Value =
+            serde_json::from_str(include_str!("../../../docs/openapi-gpu.json")).unwrap();
         assert_eq!(
             saved,
             api_doc(),

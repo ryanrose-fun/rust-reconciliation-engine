@@ -2,6 +2,8 @@ use std::{net::SocketAddr, time::Duration};
 
 #[derive(Clone)]
 pub struct Config {
+    #[cfg(feature = "gpu")]
+    pub gpu: Option<std::sync::Arc<super::gpu_service::Client>>,
     pub bind: SocketAddr,
     pub scoped_auth: bool,
     pub deadline_worker: bool,
@@ -19,6 +21,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            #[cfg(feature = "gpu")]
+            gpu: None,
             bind: "127.0.0.1:3000".parse().unwrap(),
             scoped_auth: false,
             deadline_worker: false,

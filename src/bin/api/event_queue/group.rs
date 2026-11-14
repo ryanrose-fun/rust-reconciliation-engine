@@ -11,7 +11,7 @@ struct Job {
 #[derive(Default)]
 pub(super) struct Pending {
     jobs: VecDeque<Job>,
-    running: bool,
+    pub(super) running: bool,
 }
 impl EventQueue {
     pub(in crate::routes) async fn ingest(
@@ -85,7 +85,7 @@ impl EventQueue {
                         }
                     }
                     Ok(worker) => {
-                        let store = store.clone();
+                        let batch_store = store.clone();
                         let dispatched = Instant::now();
                         // The blocking task owns all admission permits through commit and response delivery.
                         let outcome = tokio::task::spawn_blocking(move || {
@@ -94,7 +94,7 @@ impl EventQueue {
                             let started = Instant::now();
                             let group_size = jobs.len();
                             let events = jobs.iter().map(|j| j.event.clone()).collect();
-                            let result = store.apply_group(events);
+                            let result = batch_store.apply_group(events);
                             let service_ms = milliseconds(started);
                             match result {
                                 Ok((results, storage)) => {
@@ -138,6 +138,7 @@ impl EventQueue {
                         // serial was moved into the task and released there.
                         let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
                         if pending.jobs.is_empty() {
+                            drop(store);
                             pending.running = false;
                             return;
                         }
@@ -148,6 +149,7 @@ impl EventQueue {
             drop(serial);
             let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
             if pending.jobs.is_empty() {
+                drop(store);
                 pending.running = false;
                 return;
             }

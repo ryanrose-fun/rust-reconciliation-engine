@@ -3,7 +3,7 @@ default-run = "reconcile-cli"
 name = "reconcile-cli"
 version = "0.4.0"
 license = "MIT"
-description = "Snapshot payment reconciliation library, CLI, and HTTP service"
+description = "Rust GPU finance: payment reconciliation, durable event APIs and reproducible GPU compute"
 readme = "README.md"
 edition = "2024"
 
@@ -30,6 +30,16 @@ jsonschema = { version = "0.33", default-features = false }
 
 [features]
 client = ["dep:reqwest"]
+gpu = ["dep:gpu-compute", "dep:fs2"]
+
+[dependencies.gpu-compute]
+package = "rust-gpu-finance-compute"
+path = "perf/gpu"
+optional = true
+
+[dependencies.fs2]
+version = "0.4"
+optional = true
 
 [dependencies.reqwest]
 version = "0.13"

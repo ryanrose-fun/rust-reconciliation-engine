@@ -5,6 +5,7 @@
 /report.json
 /second-report.json
 /perf/target/
+/perf/gpu/target/
 
 /state/
 ledger-demo.db*
