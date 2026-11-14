@@ -17,7 +17,9 @@ try {
     $configFile = Join-Path $run 'tenants.json'
     [IO.File]::WriteAllText($configFile, (ConvertTo-Json -InputObject $config -Depth 10))
     foreach ($pair in @(@('InternalWriter','DEMO_INTERNAL_KEY'),@('ProviderWriter','DEMO_PROVIDER_KEY'),@('Auditor','DEMO_AUDITOR_KEY'))) {
-        $key = $credentials | Where-Object { $_.role -eq $pair[0] } | Select-Object -First 1 -ExpandProperty api_key
+        $credential = $credentials | Where-Object { $_['role'] -eq $pair[0] } | Select-Object -First 1
+        if ($null -eq $credential) { throw ('Missing demo credential: ' + $pair[0]) }
+        $key = $credential['api_key']
         [Environment]::SetEnvironmentVariable($pair[1], $key, 'Process')
     }
     $probe = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
