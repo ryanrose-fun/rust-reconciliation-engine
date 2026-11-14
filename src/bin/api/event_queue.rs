@@ -63,6 +63,17 @@ impl EventQueue {
             .clone()
             .acquire_many_owned(self.capacity as u32)
             .await;
+        loop {
+            let running = self
+                .pending
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .running;
+            if !running {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+        }
     }
     pub(super) async fn run<T: Send + 'static>(
         &self,

@@ -359,3 +359,115 @@ async fn rejects_reused_tenant_keys_and_database_directories() {
     assert!(build(&super::config::Config::default(), entries).is_err());
     assert!(build(&super::config::Config::default(), vec![]).is_err());
 }
+
+#[tokio::test]
+async fn partitioned_tenants_bind_routes_identity_and_source_permissions() {
+    use sha2::{Digest, Sha256};
+    let root = std::env::temp_dir().join(format!("partition-auth-{}", uuid::Uuid::new_v4()));
+    let mut entries = Vec::new();
+    for name in ["one", "two"] {
+        let dir = root.join(name);
+        std::fs::create_dir_all(&dir).unwrap();
+        let value = serde_json::json!({"id":name,"database":dir.join("events.sqlite3"),"partitions":4,"credentials":[
+            {"id":"checkout","role":"InternalWriter","api_key":format!("{name}-{}","i".repeat(32))},
+            {"id":"provider","role":"ProviderWriter","api_key":format!("{name}-{}","p".repeat(32))},
+            {"id":"audit","role":"Auditor","api_key":format!("{name}-{}","a".repeat(32))}
+        ]});
+        entries.push(serde_json::from_value(value).unwrap());
+    }
+    let (router, queues) = build(&crate::config::Config::default(), entries).unwrap();
+    async fn routed(
+        router: &Router,
+        key: &str,
+        header: &str,
+        input: serde_json::Value,
+    ) -> (u16, serde_json::Value) {
+        let request = Request::builder()
+            .method("POST")
+            .uri("/v1/events")
+            .header("authorization", format!("Bearer {key}"))
+            .header("content-type", "application/json")
+            .header("x-reconcile-payment-id", header)
+            .body(Body::from(input.to_string()))
+            .unwrap();
+        let response = router.clone().oneshot(request).await.unwrap();
+        let code = response.status().as_u16();
+        let bytes = to_bytes(response.into_body(), 65536).await.unwrap();
+        (code, serde_json::from_slice(&bytes).unwrap())
+    }
+    let key = |tenant: &str, role: char| format!("{tenant}-{}", role.to_string().repeat(32));
+    let input = serde_json::json!({"event_id":format!("{:x}:internal-1",Sha256::digest(b"payment")),"source":"Internal","version":1,"payment":{"id":"payment","currency":"GBP","amount_minor":100,"status":"Completed"}});
+    assert_eq!(
+        routed(&router, &key("one", 'p'), "payment", input.clone())
+            .await
+            .0,
+        403
+    );
+    assert_eq!(
+        routed(&router, &key("one", 'a'), "payment", input.clone())
+            .await
+            .0,
+        403
+    );
+    assert_eq!(
+        routed(&router, &key("one", 'i'), "different", input.clone())
+            .await
+            .0,
+        422
+    );
+    let mut forged = input.clone();
+    forged["event_id"] = serde_json::json!("not-payment-bound");
+    assert_eq!(
+        routed(&router, &key("one", 'i'), "payment", forged).await.0,
+        422
+    );
+    assert_eq!(
+        routed(&router, &key("one", 'i'), "payment", input.clone())
+            .await
+            .0,
+        200
+    );
+    let duplicate = routed(&router, &key("one", 'i'), "payment", input).await;
+    assert_eq!(duplicate.1["duplicate_event"], true);
+    assert_eq!(
+        call(
+            &router,
+            &key("two", 'a'),
+            "GET",
+            "/v1/payments/payment",
+            serde_json::Value::Null
+        )
+        .await
+        .0,
+        404
+    );
+    assert_eq!(
+        call(
+            &router,
+            &key("one", 'a'),
+            "GET",
+            "/v1/cases",
+            serde_json::Value::Null
+        )
+        .await
+        .0,
+        400
+    );
+    assert_eq!(
+        call(
+            &router,
+            &key("one", 'a'),
+            "GET",
+            "/v1/partitions",
+            serde_json::Value::Null
+        )
+        .await
+        .0,
+        200
+    );
+    drop(router);
+    for queue in queues {
+        queue.wait_idle().await;
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

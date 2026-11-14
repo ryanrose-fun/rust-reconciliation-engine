@@ -1,0 +1,41 @@
+{
+  "durability": "SQLite WAL synchronous FULL",
+  "profile": "release --locked --features gpu,client",
+  "ram_bytes": 16847491072,
+  "base_commit": "2737022d799eb29bd7d465ce8cb1ff80e0719674",
+  "date": "2026-11-14",
+  "payments": 1000000,
+  "command": "cargo test --release --locked --features gpu,client --test gpu_api_million -- --ignored --nocapture",
+  "notes": [
+    "One measured run per concurrency; same deterministic million-payment dataset and batching as synchronous checkpoint baseline.",
+    "One background checkpoint publisher; capture pauses owner, encoding/hash/FULL publication run off-owner.",
+    "Final checkpoint wait reported separately and with ingestion; overlapping publication durations must not be added to ingestion wall time.",
+    "OS cache not flushed; API and client share this Windows machine over HTTP loopback.",
+    "No new CPU reconciliation benchmark.",
+    "Forced process termination and restart tested; physical power failure and disk loss not simulated."
+  ],
+  "source_sha256": {
+    "perf/gpu/src/resident.wgsl": "4897d8e32540e7257c72d2afc876a7c8347804a111c080bad2bbbc2569d3a758",
+    "target/release/deps/gpu_api_million-be05c5acd9ef62e1.exe": "1be5f52428d1ad9f1730bcb375bb2856f04bd7f736f9fb0a5905494514d8be65",
+    "tests/gpu_api_recovery.rs": "b5869eda5f1e36694ea1c764d7f4f4b6d9ef599d2164f91721a41bc8d0b6a15c",
+    "target/release/api.exe": "714402902e9735200053939753bd899f52032efc8557dc908fcb172ddc23ab05",
+    "src/bin/api/gpu_service/checkpoints.rs": "96af4f21ef619d6375bad7d972e090a70f2c8fc79a24accd5ff9b6035f4dac9a",
+    "Cargo.lock": "985092fe55fe81480d2bb76bd445b8913b3d278192579c242d5dc70a3dd99524",
+    "src/bin/api/gpu_service.rs": "aff853b0a739401af1f2081329f1d0a664182169bcece63b70d652bf3e9e7d57",
+    "perf/gpu/src/resident.rs": "a384753bb7f4cd31f3962f3bb6d65a298028e32bd7bce4bcb8a658fb39788a27",
+    "tests/gpu_api_million.rs": "7253836f7a338ddc5bba032f9a513a3d131ac3d8f9f61fc0ae7caaa693180968"
+  },
+  "concurrency_cases": [
+    1,
+    4
+  ],
+  "os": "Windows",
+  "automatic_checkpoint_interval": 256,
+  "source_events": 2000000,
+  "driver": "617.14",
+  "storage": "unique local TEMP directories outside OneDrive",
+  "cpu": "Intel Core i7-14650HX",
+  "working_tree_includes_improvements": true,
+  "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "gpu_memory_mib": 8151
+}

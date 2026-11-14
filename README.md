@@ -1,4 +1,46 @@
-# Payment reconciliation engine
+# Rust GPU Finance
+
+**GPU-resident payment reconciliation in Rust, with a durable HTTP journal and
+verified restart recovery.** Built around exact integer amounts, versioned source
+updates, explicit failure semantics and reproducible performance experiments.
+
+The project explores how to build credible GPU-accelerated financial data systems.
+It reconciles payment evidence; it does not execute or settle payments. The current
+GPU API is an opt-in, single-GPU, single-tenant integration tested on an NVIDIA
+RTX 5070 Laptop GPU on Windows. Its scope and remaining engineering work are documented.
+
+## Start with the GPU system
+
+- [Run the authenticated GPU API and restart demonstration](docs/GPU_API.md)
+- [Architecture and acknowledgement/recovery guarantees](docs/GPU_ARCHITECTURE.md)
+- [Resident GPU worker: one million payments and incremental update results](docs/performance/gpu-resident.md)
+- [Durable GPU API: one million payments, HTTP latency and restart recovery](docs/performance/gpu-api-million.md)
+- [GPU pipeline and checkpoints: million-payment before/after comparison](docs/performance/gpu-api-checkpoint-comparison.md)
+- [Background GPU checkpoints: reduced stalls with durable recovery](docs/performance/gpu-api-background-checkpoints.md)
+- [Fair CPU/GPU comparison](docs/performance/cpu-gpu-comparison.md) and [multicore baseline](docs/performance/multicore-comparison.md)
+- [Live GPU crash/recovery acceptance test](tests/gpu_api_recovery.rs)
+- [Rust compute library](perf/gpu/src/lib.rs), [GPU shader](perf/gpu/src/resident.wgsl), and [durable GPU actor](src/bin/api/gpu_service.rs)
+
+The GPU remains resident between batches. The API acknowledges an update only after
+its input and computed receipt commit to a SQLite WAL/FULL journal. On restart it
+restores a verified GPU checkpoint (when available), checks retained journal integrity,
+replays the committed tail into GPU memory and only then becomes
+ready. There is no silent CPU fallback for GPU endpoints.
+
+```powershell
+# After setting a private RECONCILE_API_KEY: see docs/GPU_API.md
+.\scripts\run-gpu-api.ps1
+
+# Explicit hardware acceptance (requires a discrete GPU)
+cargo test --locked --features gpu,client --test gpu_api_recovery -- --ignored --nocapture
+```
+
+The engineering record includes successful and unfavorable benchmark results.
+Incremental GPU compute timings are kept separate from HTTP/durable-commit timings.
+The project emphasizes measurable guarantees, documented tradeoffs and recoverable
+systems over hardware marketing claims. See [architecture decisions and roadmap](docs/GPU_ARCHITECTURE.md).
+
+## Existing reconciliation library and service
 
 A Rust library, command-line tool, and HTTP service for comparing payment snapshots and continuously reconciling versioned source events. It reports all amount, status, and currency differences for each payment, with source evidence and investigation recommendations. It does not execute payments.
 

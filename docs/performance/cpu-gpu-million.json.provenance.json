@@ -1,0 +1,38 @@
+{
+  "generated_at_utc": "2026-11-14T13:15:16.6389237Z",
+  "executable_sha256": "71C17BC07155583926B263EBDAE81BB11801F53CA3603D3F0EA7F95A2D60C2EA",
+  "rust_source_sha256": "C28484EF2F8F339F01FBD2565209EC67C35824333983C9FAF55414F2D6F54421",
+  "comparison_source_sha256": "ADD709A8D7671FC25DE06025F8AC301516B32E0E648894272F596BAC14BE89DD",
+  "cargo_lock_sha256": "1FFF4E3679D6A31276E6B798B162DF5643DEA5F9CADF049A982DA3BF9A3A817C",
+  "git_head": "ca6d15af476badfda65010f40696e4b76313555b",
+  "git_status": [
+    " M .github/workflows/ci.yml",
+    " M src/bin/api/event_queue.rs",
+    " M src/bin/api/event_queue/group.rs",
+    " M src/bin/api/tenancy_tests.rs",
+    "?? docs/partition-load-suite.md",
+    "?? docs/performance/cpu-gpu-million.json",
+    "?? docs/performance/gpu-bulk-results.md",
+    "?? docs/performance/gpu-million.json",
+    "?? docs/performance/gpu-million.json.provenance.json",
+    "?? perf/gpu/",
+    "?? perf/src/bin/partition-suite.rs",
+    "?? scripts/run-gpu-bulk.ps1",
+    "?? scripts/run-partition-suite.ps1",
+    "?? scripts/sample-suite-resources.ps1",
+    "?? scripts/summarize-partition-evidence.mjs"
+  ],
+  "rust": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "gpu": [
+    "name, driver_version, memory.total [MiB]",
+    "NVIDIA GeForce RTX 5070 Laptop GPU, 617.14, 8151 MiB"
+  ],
+  "cpu": [
+    {
+      "Name": "Intel(R) Core(TM) i7-14650HX",
+      "NumberOfCores": 16,
+      "NumberOfLogicalProcessors": 24
+    }
+  ],
+  "cpu_benchmark_rerun": true
+}

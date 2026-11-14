@@ -1,5 +1,7 @@
 use axum::serve::ListenerExt;
 mod config;
+#[cfg(feature = "gpu")]
+mod gpu_service;
 mod metrics;
 mod partition_api;
 mod permissions;
@@ -14,6 +16,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     let config = config::Config::from_env()?;
+    #[cfg(not(feature = "gpu"))]
+    if std::env::var_os("RECONCILE_GPU_DB_PATH").is_some() {
+        return Err("Rebuild with --features gpu to enable the GPU API".into());
+    }
+    #[cfg(feature = "gpu")]
+    let config = {
+        let mut config = config;
+        if let Some(path) = std::env::var_os("RECONCILE_GPU_DB_PATH") {
+            if config.tenant_file.is_some()
+                || config.api_key.is_none()
+                || config.event_db.file_name() == Some(std::ffi::OsStr::new("gpu.sqlite3"))
+            {
+                return Err("GPU mode requires RECONCILE_API_KEY, a separate GPU database, and one tenant per process (no tenant file)".into());
+            }
+            let capacity = std::env::var("RECONCILE_GPU_CAPACITY")
+                .unwrap_or_else(|_| "1000000".into())
+                .parse::<usize>()?;
+            config.gpu = Some(gpu_service::Client::start(path.into(), capacity)?);
+        }
+        config
+    };
     let (router, queues) = if let Some(path) = &config.tenant_file {
         if config.api_key.is_some() {
             return Err("Use tenant credentials or RECONCILE_API_KEY, not both".into());
@@ -50,6 +73,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
     for queue in queues {
         queue.wait_idle().await;
+    }
+    #[cfg(feature = "gpu")]
+    if let Some(gpu) = &config.gpu {
+        gpu.shutdown().await;
     }
     Ok(())
 }

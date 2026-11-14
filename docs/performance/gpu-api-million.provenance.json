@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-14",
+  "gpu_memory_mib": 8151,
+  "client_and_server_same_machine": true,
+  "working_tree_includes_benchmark_changes": true,
+  "ram_bytes": 16847491072,
+  "physical_cores": 16,
+  "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "logical_processors": 24,
+  "transport": "HTTP loopback",
+  "storage": "isolated local TEMP directory outside OneDrive",
+  "source_sha256": {
+    "target/release/api.exe": "2ece1928bfecb5910414ae6a97edd8479b0714fde71c437859691ec872e13466",
+    "perf/gpu/src/resident.rs": "9c711be67c2c1069f7a64cd5520723a5818a7e3ae6b192fc2255172bd4e199a1",
+    "perf/gpu/src/resident.wgsl": "4897d8e32540e7257c72d2afc876a7c8347804a111c080bad2bbbc2569d3a758",
+    "src/bin/api/gpu_service.rs": "bbdfa74c869dace5d111aaf09742c4b26cf90d7dc3b1c404a2640ccccebea8d9",
+    "target/release/deps/gpu_api_million-be05c5acd9ef62e1.exe": "bced23b91068007af84209407d30fc4f320269173389f179758c9995cea727d9",
+    "Cargo.lock": "985092fe55fe81480d2bb76bd445b8913b3d278192579c242d5dc70a3dd99524",
+    "tests/gpu_api_million.rs": "d54f1f06e6242863deb8c550011d3b272b487444b5ea8810636acda061bb9101"
+  },
+  "command": "cargo test --release --locked --features gpu,client --test gpu_api_million -- --ignored --nocapture",
+  "os": "Windows",
+  "driver": "617.14",
+  "notes": [
+    "One measured million-payment run after a 10000-payment smoke test.",
+    "OS file cache was not flushed before restart.",
+    "No new CPU reconciliation performance benchmark.",
+    "Process force-kill/restart, not a machine power-loss test.",
+    "Resource sampling spans startup/ingestion/recovery/validation and is not isolated kernel utilization."
+  ],
+  "base_commit": "389c6d20b4782e2392640210a1cd8ff4f78a33a6",
+  "concurrency": 1,
+  "build": "release --locked --features gpu,client",
+  "cpu": "Intel Core i7-14650HX",
+  "timing_profile_enabled": true
+}

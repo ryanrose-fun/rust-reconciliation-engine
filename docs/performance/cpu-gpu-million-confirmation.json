@@ -1,0 +1,250 @@
+{
+  "adapter": "NVIDIA GeForce RTX 5070 Laptop GPU",
+  "backend": "Dx12",
+  "boundary": "Borrowed typed string-ID snapshots to owned (String,u32) result rows and duplicate counters. Includes preparation, all per-batch scratch allocation/destruction, duplicate checks, comparisons, result ID ownership, and GPU upload/readback. Reused GPU context, fresh GPU buffers and fresh ID mapping every batch. Output destruction, fixture creation and parity checking excluded equally. No JSON/HTTP/persistence/full evidence reports on either path.",
+  "cpu_threads": 1,
+  "discrepancies": 455000,
+  "driver": "32.0.16.1714",
+  "every_output_verified": true,
+  "gpu_initialization_ms": 2373.5002999999997,
+  "input_records": 2000000,
+  "input_sha256": "d3edde507dcc6197d367d7d1bd19b66f6d3baf1588c1e905af11689abe311c75",
+  "matched": 555000,
+  "order": [
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      2,
+      1,
+      0
+    ],
+    [
+      1,
+      2,
+      0
+    ],
+    [
+      0,
+      2,
+      1
+    ],
+    [
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      2
+    ],
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      2,
+      1,
+      0
+    ],
+    [
+      1,
+      2,
+      0
+    ],
+    [
+      0,
+      2,
+      1
+    ],
+    [
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      2
+    ],
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      2,
+      1,
+      0
+    ],
+    [
+      1,
+      2,
+      0
+    ],
+    [
+      0,
+      2,
+      1
+    ],
+    [
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      2
+    ],
+    [
+      0,
+      1,
+      2
+    ],
+    [
+      2,
+      1,
+      0
+    ],
+    [
+      1,
+      2,
+      0
+    ],
+    [
+      0,
+      2,
+      1
+    ],
+    [
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      2
+    ]
+  ],
+  "payments_per_source": 1000000,
+  "result_sha256": "8da38dc367024f39a3bce00c0aee1a9182b4d28d9668beb9712971d82863b981",
+  "results": [
+    {
+      "first_use_ms": 300.0865,
+      "implementation": "cpu_direct_string_join",
+      "warm": {
+        "max_ms": 324.0806,
+        "median_ms": 298.3179,
+        "min_ms": 285.4666,
+        "samples_ms": [
+          285.4666,
+          305.51660000000004,
+          306.9975,
+          299.67339999999996,
+          287.0308,
+          313.7534,
+          302.6232,
+          293.3559,
+          324.0806,
+          301.7282,
+          300.1622,
+          285.7093,
+          291.7971,
+          289.6896,
+          286.1475,
+          292.06759999999997,
+          303.7472,
+          291.03240000000005,
+          307.20180000000005,
+          303.5908,
+          314.4497,
+          287.9635,
+          296.9624,
+          287.7044
+        ]
+      }
+    },
+    {
+      "first_use_ms": 346.6442,
+      "implementation": "cpu_packed_join",
+      "warm": {
+        "max_ms": 349.6121,
+        "median_ms": 299.9673,
+        "min_ms": 283.1758,
+        "samples_ms": [
+          318.09549999999996,
+          303.6531,
+          299.03400000000005,
+          300.05150000000003,
+          326.59270000000004,
+          349.6121,
+          286.2868,
+          289.327,
+          319.3057,
+          297.6999,
+          292.7383,
+          297.62539999999996,
+          299.0921,
+          294.5917,
+          303.9095,
+          327.9999,
+          333.901,
+          299.8831,
+          303.82759999999996,
+          283.1758,
+          290.6383,
+          303.9985,
+          292.7866,
+          300.3226
+        ]
+      }
+    },
+    {
+      "first_use_ms": 427.57869999999997,
+      "implementation": "gpu_packed_join",
+      "warm": {
+        "max_ms": 346.44550000000004,
+        "median_ms": 324.3907,
+        "min_ms": 280.4428,
+        "samples_ms": [
+          299.00120000000004,
+          336.8676,
+          335.11809999999997,
+          313.4366,
+          299.851,
+          339.0755,
+          328.92179999999996,
+          280.4428,
+          310.5289,
+          316.6797,
+          332.6866,
+          322.6846,
+          324.3383,
+          345.98089999999996,
+          320.75379999999996,
+          331.00469999999996,
+          339.3292,
+          312.789,
+          330.8535,
+          346.44550000000004,
+          314.8,
+          324.44309999999996,
+          330.1677,
+          314.1778
+        ]
+      }
+    }
+  ],
+  "schema": "cpu-gpu-equal-boundary-v1",
+  "shader_sha256": "512ba4cd79226064b02a50bb2d5b1e5484d8d9ca7201c5949dbe208478a3c171",
+  "source_sha256": "add709a8d7671fc25de06025f8ac301516b32e0e648894272f596bac14be89dd",
+  "trials_per_path": 24,
+  "unique_ids": 1010000,
+  "warmups_per_path": 2
+}
