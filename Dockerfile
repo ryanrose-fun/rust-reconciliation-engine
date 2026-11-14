@@ -2,6 +2,8 @@ FROM rust:1.99.1-bookworm AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
+COPY perf/gpu/Cargo.toml perf/gpu/Cargo.lock ./perf/gpu/
+COPY perf/gpu/src ./perf/gpu/src
 COPY examples/reconciliation_lifecycle.rs ./examples/reconciliation_lifecycle.rs
 COPY examples/partitioned_integration.rs ./examples/partitioned_integration.rs
 RUN cargo build --release --locked --bin api --bin reconcile-cli --bin maintenance
