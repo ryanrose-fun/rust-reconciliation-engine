@@ -128,16 +128,31 @@ webhooks and source-role credentials are not yet integrated into GPU endpoints.
 
 Automatic checkpoints default to every 256 newly committed batches. Set
 `RECONCILE_GPU_CHECKPOINT_BATCHES` to 1..1,000,000 to change the interval. Publication
-blocks the actor briefly and contributes to request latency. An authenticated empty
+uses one bounded background publisher. Only immutable GPU snapshot capture pauses
+the actor; encoding, checksums, identity scanning and disk publication run outside it.
+Disk/CPU contention can still affect latency. An authenticated empty
 POST to `/v1/gpu/checkpoint` requests a checkpoint at the latest committed sequence;
-repeating it without intervening writes is a no-op. Empty state returns 422.
+its response waits until at least that boundary is durably published. Concurrent
+requests can coalesce onto a later boundary. Repeating it without intervening writes
+is a no-op. Empty state returns 422; at most 32 manual waiters are retained.
+Health reports `checkpoint_sequence` and nullable `checkpoint_in_flight` separately.
 
 The checkpoint is a compact little-endian copy of the GPU's slots, source values,
-versions and results, stored in the same SQLite database. Payload, boundary and
-identity manifest publish in one FULL transaction. A failed publication leaves the
-previous checkpoint intact and stops the worker. Corruption fails startup rather
-than silently discarding the checkpoint. Older journals without checkpoints still
-replay normally; no destructive migration or deletion is performed.
+versions and results. It is stored in `gpu-checkpoints.sqlite3`, beside the event
+journal `gpu.sqlite3`, with its own WAL/FULL transaction. This avoids holding the
+event journal's writer lock while publishing a large blob. The captured boundary
+is already durably committed in the journal; recovery verifies that binding before
+readiness, so no cross-database atomic write is required. Payload, boundary and
+identity manifest publish atomically together. A failed publication leaves the
+previous checkpoint intact and stops the worker when the failure is observed.
+Explicit checkpoint requests do not report success before publication.
+
+Only one immutable snapshot may be in flight. Pending requests are coalesced rather
+than queuing more full snapshots. Shutdown waits for the publisher before releasing
+the journal ownership lock. Corruption fails startup rather than silently choosing
+an older checkpoint. Existing embedded checkpoints from the preceding release are
+still loaded when no separate checkpoint exists; later snapshots publish to the new
+file. Journals without checkpoints still replay normally. Nothing is deleted.
 
 The complete journal and identity index remain retained. Startup still scans their
 integrity; only GPU/JSON replay is limited to the tail. This is not constant-time
@@ -147,7 +162,8 @@ corruption, not an attacker able to rewrite the database and all its checksums.
 
 Disk loss is not process restart: maintain backups. Never delete
 SQLite WAL/SHM files while the service is running. For a simple offline copy, stop
-the service cleanly and retain the complete data directory. The GPU journal records
+the service cleanly and retain the complete data directory, including both databases
+and any WAL/SHM files. The GPU journal records
 payment evidence and needs filesystem access controls appropriate to that data.
 
 ## Reproducible hardware acceptance

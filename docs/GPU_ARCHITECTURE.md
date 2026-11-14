@@ -55,14 +55,23 @@ GPU execution and commit remain ordered; this does not overlap speculative GPU s
 with an asynchronous storage writer. Source versions handle requests arriving out of
 order from concurrent clients.
 
-Checkpoints capture all occupied GPU slots at a committed sequence. A single SQLite
-FULL transaction publishes the binary payload, SHA-256, journal-prefix chain and
-identity-index manifest. Restart verifies these plus existing metadata and journal
+Checkpoints capture all occupied GPU slots at a committed sequence. The actor copies
+GPU buffers and slot IDs to one immutable host snapshot. A bounded background publisher
+encodes it, hashes it and scans the captured identity prefix. A separate SQLite
+WAL/FULL database atomically publishes the binary payload, SHA-256, journal-prefix
+chain and identity-index manifest, without taking the event journal's writer lock.
+The referenced journal sequence was committed before capture. Restart verifies
+this binding plus existing metadata and journal
 integrity, uploads the checkpoint and compares a full GPU readback before replaying
 the tail. The journal and identity index remain retained and scanned for integrity.
-Checkpoint creation pauses the actor and its cost is included in ingestion benchmarks;
-an explicit final checkpoint is separately timed. Failed publication leaves the old
-checkpoint usable after restart; corrupted checkpoints fail closed.
+Only capture pauses the actor. Encoding/publication can overlap later ingestion,
+but shared CPU/storage contention remains measurable. Automatic work is included
+in ingestion measurements; a separately timed final checkpoint waits for completed
+publication. One snapshot and at most 32 manual waiters are allowed; superseding
+requests coalesce. Explicit acknowledgements wait for publication. Shutdown joins
+the writer before releasing journal ownership. Failed publication leaves the old
+checkpoint usable after restart; corrupted checkpoints fail closed. Legacy embedded
+checkpoints remain readable, and retained journal integrity is still scanned.
 
 Host-assigned dense slots map exact string IDs. A patch contains at most one update
 per source for a payment; one shader invocation owns that payment during a dispatch.

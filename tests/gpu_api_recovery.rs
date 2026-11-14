@@ -148,11 +148,52 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
             .0,
         200
     );
+    // Hold the checkpoint writer lock: ordinary durable ingestion must still
+    // proceed against its independent journal while publication is blocked.
+    assert_eq!(request(&server,"POST","/v1/gpu/events",Some(json!({"request_id":"bg-a","events":[event("BG-A","Internal",1,777,"Completed","bg-a")]})),KEY).await.0,200);
+    let blocker = rusqlite::Connection::open(root.join("gpu-checkpoints.sqlite3")).unwrap();
+    blocker.execute_batch("BEGIN IMMEDIATE").unwrap();
+    let url = format!("{}/v1/gpu/checkpoint", server.url);
+    let publishing = tokio::spawn(async move {
+        let r = reqwest::Client::new()
+            .post(url)
+            .bearer_auth(KEY)
+            .send()
+            .await
+            .unwrap();
+        (r.status(), r.bytes().await.unwrap())
+    });
+    tokio::time::timeout(Duration::from_secs(2), async {
+        loop {
+            if request(&server, "GET", "/v1/gpu/health", None, KEY).await.1["checkpoint_in_flight"]
+                == 2
+            {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert!(!publishing.is_finished());
+    assert_eq!(request(&server,"POST","/v1/gpu/events",Some(json!({"request_id":"bg-b","events":[event("BG-B","Internal",1,888,"Completed","bg-b")]})),KEY).await.0,200);
+    blocker.execute_batch("COMMIT").unwrap();
+    drop(blocker);
+    let (status, body) = publishing.await.unwrap();
+    assert_eq!(status, 200);
+    let cp: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(cp["checkpoint_sequence"], 2);
     drop(server);
     server = start(&root);
     assert_eq!(
         request(&server, "GET", "/v1/gpu/health", None, KEY).await.1["checkpoint_sequence"],
-        1
+        2
+    );
+    assert_eq!(
+        request(&server, "GET", "/v1/gpu/payments/BG-B", None, KEY)
+            .await
+            .1["internal"]["amount_minor"],
+        888
     );
     let state = request(&server, "GET", "/v1/gpu/payments/P1", None, KEY)
         .await
@@ -365,7 +406,7 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
     // A checkpoint write failure must retain the previous complete checkpoint.
     drop(db);
     server = start(&root);
-    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    let db = rusqlite::Connection::open(root.join("gpu-checkpoints.sqlite3")).unwrap();
     db.execute_batch("CREATE TRIGGER reject_checkpoint BEFORE INSERT ON gpu_checkpoint BEGIN SELECT RAISE(ABORT,'injected checkpoint failure'); END;").unwrap();
     drop(db);
     assert_eq!(
@@ -375,12 +416,12 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
         503
     );
     drop(server);
-    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    let db = rusqlite::Connection::open(root.join("gpu-checkpoints.sqlite3")).unwrap();
     db.execute_batch("DROP TRIGGER reject_checkpoint").unwrap();
     let old: i64 = db
         .query_row("SELECT seq FROM gpu_checkpoint", [], |r| r.get(0))
         .unwrap();
-    assert_eq!(old, 1);
+    assert_eq!(old, 2);
     drop(db);
     server = start(&root);
     assert_eq!(
@@ -426,7 +467,42 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
         200
     );
     drop(server);
-    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    let db = rusqlite::Connection::open(root.join("gpu-checkpoints.sqlite3")).unwrap();
+    // Simulate the preceding release's embedded checkpoint, offline. It must
+    // restore without destructive migration and publish future snapshots aside.
+    let saved: (i64, String, String, Vec<u8>, String) = db
+        .query_row(
+            "SELECT seq,chain,identities,payload,sha256 FROM gpu_checkpoint",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+        )
+        .unwrap();
+    let journal = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    journal
+        .execute(
+            "INSERT OR REPLACE INTO gpu_checkpoint VALUES(1,?1,?2,?3,?4,?5)",
+            rusqlite::params![saved.0, saved.1, saved.2, saved.3, saved.4],
+        )
+        .unwrap();
+    drop(journal);
+    db.execute("DELETE FROM gpu_checkpoint", []).unwrap();
+    drop(db);
+    server = start(&root);
+    assert_eq!(
+        request(&server, "GET", "/v1/gpu/payments/P1", None, KEY)
+            .await
+            .1["internal"]["amount_minor"],
+        json!(u64::MAX)
+    );
+    assert_eq!(request(&server,"POST","/v1/gpu/events",Some(json!({"request_id":"migration-tail","events":[event("MIGRATED","Internal",1,999,"Completed","migration-tail")]})),KEY).await.0,200);
+    assert_eq!(
+        request(&server, "POST", "/v1/gpu/checkpoint", None, KEY)
+            .await
+            .0,
+        200
+    );
+    drop(server);
+    let db = rusqlite::Connection::open(root.join("gpu-checkpoints.sqlite3")).unwrap();
     let digest: String = db
         .query_row("SELECT sha256 FROM gpu_checkpoint", [], |r| r.get(0))
         .unwrap();
@@ -434,9 +510,11 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
         .unwrap();
     drop(db);
     failure_exit(command(&root).spawn().unwrap());
-    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    let db = rusqlite::Connection::open(root.join("gpu-checkpoints.sqlite3")).unwrap();
     db.execute("UPDATE gpu_checkpoint SET sha256=?1", [digest])
         .unwrap();
+    drop(db);
+    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
     db.execute(
         "UPDATE gpu_requests SET input_sha256='tampered' WHERE request_id='seed'",
         [],

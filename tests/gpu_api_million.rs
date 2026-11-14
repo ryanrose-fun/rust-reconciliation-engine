@@ -97,7 +97,14 @@ fn percentile(values: &[f64], p: f64) -> f64 {
 }
 fn sizes(root: &Path) -> Value {
     let mut result = serde_json::Map::new();
-    for name in ["gpu.sqlite3", "gpu.sqlite3-wal", "gpu.sqlite3-shm"] {
+    for name in [
+        "gpu.sqlite3",
+        "gpu.sqlite3-wal",
+        "gpu.sqlite3-shm",
+        "gpu-checkpoints.sqlite3",
+        "gpu-checkpoints.sqlite3-wal",
+        "gpu-checkpoints.sqlite3-shm",
+    ] {
         result.insert(
             name.into(),
             json!(
@@ -293,6 +300,21 @@ async fn durable_million_payment_benchmark() {
         db.query_row("PRAGMA integrity_check", [], |r| r.get::<_, String>(0))
             .unwrap(),
         "ok"
+    );
+    let cpdb = rusqlite::Connection::open_with_flags(
+        root.join("gpu-checkpoints.sqlite3"),
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+    )
+    .unwrap();
+    assert_eq!(
+        cpdb.query_row("PRAGMA integrity_check", [], |r| r.get::<_, String>(0))
+            .unwrap(),
+        "ok"
+    );
+    assert_eq!(
+        cpdb.query_row("SELECT seq FROM gpu_checkpoint", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        batches
     );
     let profiles: Vec<Value> = std::fs::read_to_string(root.join("api.log"))
         .unwrap()

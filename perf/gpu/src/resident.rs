@@ -90,18 +90,41 @@ pub struct Worker<'a> {
     capacity: usize,
     max_batch: usize,
 }
+/// Immutable host-owned copy of a committed GPU boundary. Encoding can run off
+/// the GPU owner thread while subsequent GPU updates proceed independently.
+pub struct CheckpointData {
+    ids: Vec<String>,
+    words: Vec<u32>,
+}
+impl CheckpointData {
+    pub fn encode(self) -> Vec<u8> {
+        let size =
+            12 + self.ids.iter().map(|id| 4 + id.len()).sum::<usize>() + self.words.len() * 4;
+        let mut bytes = Vec::with_capacity(size);
+        bytes.extend_from_slice(b"RGPUCP01");
+        bytes.extend_from_slice(&(self.ids.len() as u32).to_le_bytes());
+        for id in self.ids {
+            bytes.extend_from_slice(&(id.len() as u32).to_le_bytes());
+            bytes.extend_from_slice(id.as_bytes());
+        }
+        for word in self.words {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        bytes
+    }
+}
 impl<'a> Worker<'a> {
     /// Stable little-endian checkpoint: IDs in slot order followed by the three
     /// resident buffers. State is read from the GPU, not recomputed on the CPU.
     pub fn checkpoint(&self) -> Vec<u8> {
-        let mut bytes = b"RGPUCP01".to_vec();
-        bytes.extend_from_slice(&(self.ids.len() as u32).to_le_bytes());
-        for id in &self.ids {
-            bytes.extend_from_slice(&(id.len() as u32).to_le_bytes());
-            bytes.extend_from_slice(id.as_bytes());
-        }
+        self.capture_checkpoint().encode()
+    }
+    pub fn capture_checkpoint(&self) -> CheckpointData {
         if self.ids.is_empty() {
-            return bytes;
+            return CheckpointData {
+                ids: vec![],
+                words: vec![],
+            };
         }
         let size = self.ids.len() * 52;
         let staging = self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
@@ -118,10 +141,10 @@ impl<'a> Worker<'a> {
             offset += len;
         }
         self.gpu.queue.submit(Some(encoder.finish()));
-        for word in self.read(&staging, size) {
-            bytes.extend_from_slice(&word.to_le_bytes());
+        CheckpointData {
+            ids: self.ids.clone(),
+            words: self.read(&staging, size),
         }
-        bytes
     }
     /// Restore into a fresh worker only, validating the complete payload before
     /// any GPU mutation. The caller verifies the persisted checksum and boundary.
@@ -745,6 +768,35 @@ pub fn run(n: usize, path: &str) {
 #[cfg(test)]
 mod checkpoint_tests {
     use super::*;
+    #[test]
+    fn background_encoding_preserves_format_and_exact_words() {
+        let words = vec![
+            1,
+            0,
+            u32::MAX,
+            u32::MAX,
+            0,
+            1,
+            1,
+            0,
+            u32::MAX,
+            u32::MAX,
+            0,
+            1,
+            1,
+        ];
+        let data = CheckpointData {
+            ids: vec!["p".into()],
+            words: words.clone(),
+        };
+        let bytes = data.encode();
+        assert_eq!(bytes.len(), 12 + 5 + 52);
+        assert_eq!(&bytes[..17], b"RGPUCP01\x01\0\0\0\x01\0\0\0p");
+        assert_eq!(
+            decode_checkpoint(&bytes, 1).unwrap(),
+            (vec!["p".into()], words)
+        );
+    }
     #[test]
     fn rejects_malformed_checkpoint_before_gpu_use() {
         assert!(decode_checkpoint(b"RGPUCP01\0\0\0\0", 1).is_ok());

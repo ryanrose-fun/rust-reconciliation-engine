@@ -1,4 +1,5 @@
 //! Single-owner GPU actor. Acknowledgements follow a FULL SQLite commit.
+mod checkpoints;
 use gpu_compute::{
     Gpu,
     resident::{Change, Event, Receipt, Worker},
@@ -319,7 +320,7 @@ fn run(
     let mut worker = Worker::new(&gpu, capacity, MAX_EVENTS);
     let mut committed = 0i64;
     let mut chain = String::new();
-    let checkpoint: Option<(i64, String, String, Vec<u8>, String)> = db
+    let legacy_checkpoint: Option<checkpoints::Stored> = db
         .query_row(
             "SELECT seq,chain,identities,payload,sha256 FROM gpu_checkpoint WHERE singleton=1",
             [],
@@ -327,6 +328,15 @@ fn run(
         )
         .optional()
         .map_err(|e| e.to_string())?;
+    let published = checkpoints::load(&path)?;
+    if published
+        .as_ref()
+        .zip(legacy_checkpoint.as_ref())
+        .is_some_and(|(new, old)| new.0 < old.0)
+    {
+        return Err("Published checkpoint predates embedded checkpoint".into());
+    }
+    let checkpoint = published.or(legacy_checkpoint);
     let checkpoint_seq = checkpoint.as_ref().map_or(0, |c| c.0);
     if let Some((seq, _, identities, payload, digest)) = &checkpoint {
         let (watermark, expected) = identities
@@ -415,10 +425,35 @@ fn run(
     }
     eprintln!("GPU ready: {adapter}; recovered {committed} committed batches");
     ready.send(Ok(())).map_err(|_| "Startup cancelled")?;
-    while let Ok(command) = rx.recv() {
+    let mut pending: Option<checkpoints::Pending> = None;
+    let mut waiters: Vec<(i64, oneshot::Sender<Answer>)> = Vec::new();
+    loop {
+        if pending.as_ref().is_some_and(|p| p.finished()) {
+            checkpoint_at = pending.take().unwrap().finish()?;
+        }
+        waiters.retain(|(_, reply)| !reply.is_closed());
+        let mut remaining = Vec::new();
+        for (target, reply) in waiters.drain(..) {
+            if target <= checkpoint_at {
+                let _ = reply.send(Ok(serde_json::json!({"checkpoint_sequence":checkpoint_at})));
+            } else {
+                remaining.push((target, reply));
+            }
+        }
+        waiters = remaining;
+        if pending.is_none()
+            && (committed - checkpoint_at >= checkpoint_every || !waiters.is_empty())
+        {
+            pending = Some(checkpoints::start(&path, &worker, &db, committed, &chain)?);
+        }
+        let command = match rx.recv_timeout(std::time::Duration::from_millis(10)) {
+            Ok(c) => c,
+            Err(mpsc::RecvTimeoutError::Timeout) => continue,
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+        };
         match command {
             Command::Health(reply) => {
-                let _=reply.send(Ok(serde_json::json!({"status":"ready","backend":"gpu","adapter":adapter,"committed_batches":committed,"checkpoint_sequence":checkpoint_at,"capacity":capacity,"durability":"sqlite-wal-full","recovered_before_ready":true})));
+                let _=reply.send(Ok(serde_json::json!({"status":"ready","backend":"gpu","adapter":adapter,"committed_batches":committed,"checkpoint_sequence":checkpoint_at,"checkpoint_in_flight":pending.as_ref().map(|p|p.seq),"capacity":capacity,"durability":"sqlite-wal-full","recovered_before_ready":true})));
             }
             Command::Checkpoint(reply) => {
                 if committed == 0 {
@@ -431,16 +466,10 @@ fn run(
                     let _ = reply.send(Ok(serde_json::json!({"checkpoint_sequence":committed})));
                     continue;
                 }
-                match save_checkpoint(&mut db, &worker, committed, &chain) {
-                    Ok(()) => {
-                        checkpoint_at = committed;
-                        let _ =
-                            reply.send(Ok(serde_json::json!({"checkpoint_sequence":committed})));
-                    }
-                    Err(e) => {
-                        let _ = reply.send(Err(Error::Unavailable));
-                        return Err(e);
-                    }
+                if waiters.len() >= 32 {
+                    let _ = reply.send(Err(Error::Busy));
+                } else {
+                    waiters.push((committed, reply));
                 }
             }
             Command::Get(id, reply) => {
@@ -451,6 +480,9 @@ fn run(
                 let _ = reply.send(response);
             }
             Command::Stop(reply) => {
+                if let Some(job) = pending.take() {
+                    job.finish()?;
+                }
                 let _ = reply.send(());
                 break;
             }
@@ -468,13 +500,6 @@ fn run(
                             );
                         }
                         committed = committed.max(answer.commit_sequence);
-                        if committed - checkpoint_at >= checkpoint_every {
-                            if let Err(e) = save_checkpoint(&mut db, &worker, committed, &chain) {
-                                let _ = reply.send(Err(Error::Unavailable));
-                                return Err(e);
-                            }
-                            checkpoint_at = committed;
-                        }
                         let _ = reply.send(Ok(serde_json::to_value(answer).unwrap()));
                     }
                     Err(ApplyError::User(e)) => {
@@ -525,40 +550,6 @@ fn identity_digest(db: &Connection, watermark: i64) -> Result<String, String> {
         return Err("GPU identity index truncated".into());
     }
     Ok(format!("{:x}", h.finalize()))
-}
-fn save_checkpoint(
-    db: &mut Connection,
-    worker: &Worker<'_>,
-    seq: i64,
-    chain: &str,
-) -> Result<(), String> {
-    let start = std::time::Instant::now();
-    let payload = worker.checkpoint();
-    let digest = format!("{:x}", Sha256::digest(&payload));
-    let watermark: i64 = db
-        .query_row(
-            "SELECT coalesce(max(rowid),0) FROM gpu_event_ids",
-            [],
-            |r| r.get(0),
-        )
-        .map_err(|e| e.to_string())?;
-    let identities = format!("{watermark}:{}", identity_digest(db, watermark)?);
-    let tx = db
-        .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
-        .map_err(|e| e.to_string())?;
-    tx.execute(
-        "INSERT OR REPLACE INTO gpu_checkpoint VALUES(1,?1,?2,?3,?4,?5)",
-        params![seq, chain, identities, payload, digest],
-    )
-    .map_err(|e| e.to_string())?;
-    tx.commit().map_err(|e| e.to_string())?;
-    if std::env::var_os("RECONCILE_GPU_PROFILE").is_some() {
-        eprintln!(
-            "GPU_PROFILE {}",
-            serde_json::json!({"phase":"checkpoint","sequence":seq,"bytes":payload.len(),"total_ms":start.elapsed().as_secs_f64()*1000.0})
-        );
-    }
-    Ok(())
 }
 enum ApplyError {
     User(Error),
