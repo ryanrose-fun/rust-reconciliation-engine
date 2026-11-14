@@ -32,7 +32,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
     };
     let listener = tokio::net::TcpListener::bind(config.bind).await?;
-    println!("API listening on http://{}", config.bind);
+    println!("API listening on http://{}", listener.local_addr()?);
+    // Launchers discover the OS-assigned port from redirected stdout.
+    std::io::Write::flush(&mut std::io::stdout())?;
     println!("Ctrl+C to stop; active storage operations drain before exit");
     axum::serve(
         listener.tap_io(|stream| {

@@ -22,19 +22,33 @@ try {
         $key = $credential['api_key']
         [Environment]::SetEnvironmentVariable($pair[1], $key, 'Process')
     }
-    $probe = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
-    $probe.Start(); $port = $probe.LocalEndpoint.Port; $probe.Stop()
     $env:RECONCILE_TENANTS_FILE = $configFile
     $env:RECONCILE_API_KEY = $null
     $env:RECONCILE_EVENT_WAIT_MS = '30000'
-    $env:RECONCILE_BIND = "127.0.0.1:$port"
-    $env:DEMO_API_URL = "http://127.0.0.1:$port"
+    $env:RECONCILE_BIND = "127.0.0.1:0"
+    $env:DEMO_API_URL = $null
     $env:DEMO_RUN_DIRECTORY = $run
     $server = Start-Process -FilePath (Join-Path $root 'target/debug/api.exe') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $run 'api.log') -RedirectStandardError (Join-Path $run 'api.err.log')
+    Write-Host "Starting partitioned API; Windows will assign its listening port..."
     $ready = $false
     for ($i = 0; $i -lt 80; $i++) {
         if ($server.HasExited) { throw (Get-Content (Join-Path $run 'api.err.log') -Raw) }
-        try { $null = Invoke-RestMethod "$env:DEMO_API_URL/health" -TimeoutSec 1; $ready = $true; break }
+        try {
+            if (-not $env:DEMO_API_URL) {
+                $log = Get-Content -LiteralPath (Join-Path $run 'api.log') -ErrorAction SilentlyContinue
+                foreach ($line in $log) {
+                    if ($line -match '^API listening on http://127\.0\.0\.1:([0-9]+)$') {
+                        $port = [int]$Matches[1]
+                        if ($port -gt 0 -and $port -le 65535) { $env:DEMO_API_URL = "http://127.0.0.1:$port"; break }
+                    }
+                }
+            }
+            if (-not $env:DEMO_API_URL) { Start-Sleep -Milliseconds 250; continue }
+            $null = Invoke-RestMethod "$env:DEMO_API_URL/health" -TimeoutSec 1
+            $ready = $true
+            Write-Host "API ready at $env:DEMO_API_URL; starting checkout/provider simulation..."
+            break
+        }
         catch { Start-Sleep -Milliseconds 250 }
     }
     if (-not $ready) { throw 'API did not become ready' }
