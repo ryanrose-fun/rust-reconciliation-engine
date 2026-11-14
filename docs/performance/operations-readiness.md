@@ -30,9 +30,9 @@ The independent hosted workflow `Sustained event acceptance` runs the same porta
 
 ## Independent hosted verification
 
-Published code commit: 7dc4f28f0a0f0417dd100775d39b9faa8655d09a. [Standard CI](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/runs/43399307547) passed Windows/Linux tests, strict lints, Docker build and dependency audit. The concurrent engineering-decisions documentation and ledger feature were preserved and tested before publication.
+Published code commit: 7dc4f28f0a0f0417dd100775d39b9faa8655d09a. [Standard CI](https://github.com/ryanrose-fun/rust-gpu-finance/actions/runs/43399307547) passed Windows/Linux tests, strict lints, Docker build and dependency audit. The concurrent engineering-decisions documentation and ledger feature were preserved and tested before publication.
 
-[Hosted soak workflow](https://github.com/ryanrose-fun/rust-reconciliation-engine/actions/runs/43399308964) passed two rounds each at concurrency 8 and 16 on both Windows and Linux: eight 60-second cases total. Linux (ext4) committed 844,028 unique events across 211,007 complete lifecycles. Hosted Windows committed 323,660 unique events across 80,915 complete lifecycles. All cases had zero workload errors, matching full database audits and successful restart lookups. Linux SIGTERM exit codes were zero; Windows forced termination is not treated as a graceful shutdown test.
+[Hosted soak workflow](https://github.com/ryanrose-fun/rust-gpu-finance/actions/runs/43399308964) passed two rounds each at concurrency 8 and 16 on both Windows and Linux: eight 60-second cases total. Linux (ext4) committed 844,028 unique events across 211,007 complete lifecycles. Hosted Windows committed 323,660 unique events across 80,915 complete lifecycles. All cases had zero workload errors, matching full database audits and successful restart lookups. Linux SIGTERM exit codes were zero; Windows forced termination is not treated as a graceful shutdown test.
 
 Raw reports: operations-hosted-linux-60s.json and operations-hosted-windows-60s.json. They retain binary hashes and operating-system information. Windows filesystem type was not independently verified by the portable runner. These are synthetic same-host measurements, not a comparative platform benchmark or a production SLA.
 

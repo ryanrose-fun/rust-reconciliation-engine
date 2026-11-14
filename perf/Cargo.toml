@@ -3,6 +3,7 @@ name = "reconciliation-perf"
 version = "0.1.0"
 edition = "2024"
 publish = false
+repository = "https://github.com/ryanrose-fun/rust-gpu-finance"
 
 [dependencies]
 reconcile-cli = { path = ".." }

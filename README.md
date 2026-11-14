@@ -18,6 +18,8 @@ Requires Rust 1.99.1. GPU mode needs a supported discrete GPU; Kafka streaming a
 needs a running broker. The measured development system uses an RTX 5070 Laptop GPU.
 
 ```powershell
+git clone https://github.com/ryanrose-fun/rust-gpu-finance.git
+cd rust-gpu-finance
 cargo test --locked --all-features
 # Set RECONCILE_API_KEY, then follow the GPU API configuration guide:
 .\scripts\run-gpu-api.ps1

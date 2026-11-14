@@ -3,6 +3,7 @@ name = "rust-gpu-finance-compute"
 version = "0.1.0"
 edition = "2024"
 publish = false
+repository = "https://github.com/ryanrose-fun/rust-gpu-finance"
 
 [[bin]]
 name = "reconcile-gpu-prototype"
