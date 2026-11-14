@@ -341,3 +341,116 @@ fn unsupported_database_version_is_not_silently_reset() {
         .unwrap();
     assert_eq!(version, 99);
 }
+
+#[test]
+fn batch_conflict_rolls_back_every_event() {
+    let store = memory();
+    let a = event(
+        "batch-a",
+        EventSource::Internal,
+        1,
+        PaymentStatus::Completed,
+    );
+    let mut b = a.clone();
+    b.payment.amount_minor = 10;
+    assert!(matches!(
+        store.apply_batch(vec![a.clone(), b]),
+        Err(EventError::EventIdConflict)
+    ));
+    assert!(matches!(store.status("PAY-001"), Err(EventError::NotFound)));
+    assert!(!store.apply(a).unwrap().duplicate_event);
+}
+
+#[test]
+fn batch_preserves_order_and_exact_retries() {
+    let store = memory();
+    let a = event(
+        "batch-i",
+        EventSource::Internal,
+        1,
+        PaymentStatus::Completed,
+    );
+    let b = event(
+        "batch-p",
+        EventSource::Provider,
+        1,
+        PaymentStatus::Completed,
+    );
+    let (receipts, _) = store.apply_batch(vec![a.clone(), b, a]).unwrap();
+    assert_eq!(status(&receipts[0].payment), "AwaitingProvider");
+    assert_eq!(status(&receipts[1].payment), "Matched");
+    assert!(receipts[2].duplicate_event);
+    assert_eq!(status(&receipts[2].payment), "Matched");
+}
+
+#[test]
+fn batch_rejects_unbounded_or_empty_work() {
+    let store = memory();
+    assert!(store.apply_batch(vec![]).is_err());
+    assert!(
+        store
+            .apply_batch(vec![
+                event(
+                    "a",
+                    EventSource::Internal,
+                    1,
+                    PaymentStatus::Completed
+                );
+                257
+            ])
+            .is_err()
+    );
+}
+
+#[test]
+fn batch_failure_leaves_history_and_source_state_unchanged() {
+    let store = memory();
+    let a = event(
+        "initial",
+        EventSource::Internal,
+        1,
+        PaymentStatus::Completed,
+    );
+    store.apply(a.clone()).unwrap();
+    let before: i64 = store
+        .lock()
+        .unwrap()
+        .query_row("SELECT count(*) FROM payment_history", [], |r| r.get(0))
+        .unwrap();
+    let b = event("provider", EventSource::Provider, 1, PaymentStatus::Pending);
+    let mut conflict = a;
+    conflict.payment.amount_minor = 0;
+    assert!(store.apply_batch(vec![b.clone(), conflict]).is_err());
+    let after: i64 = store
+        .lock()
+        .unwrap()
+        .query_row("SELECT count(*) FROM payment_history", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(before, after);
+    assert!(store.status("PAY-001").unwrap().provider.is_none());
+    assert!(!store.apply(b).unwrap().duplicate_event);
+}
+
+#[test]
+fn group_commit_isolates_conflicts_and_preserves_order() {
+    let store = memory();
+    let a = event(
+        "group-i",
+        EventSource::Internal,
+        1,
+        PaymentStatus::Completed,
+    );
+    let mut conflict = a.clone();
+    conflict.payment.amount_minor = 1;
+    let b = event(
+        "group-p",
+        EventSource::Provider,
+        1,
+        PaymentStatus::Completed,
+    );
+    let (results, _) = store.apply_group(vec![a.clone(), conflict, b, a]).unwrap();
+    assert!(results[0].is_ok());
+    assert!(matches!(results[1], Err(EventError::EventIdConflict)));
+    assert_eq!(status(&results[2].as_ref().unwrap().payment), "Matched");
+    assert!(results[3].as_ref().unwrap().duplicate_event);
+}

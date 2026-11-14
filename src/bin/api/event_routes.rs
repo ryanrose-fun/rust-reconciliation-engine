@@ -286,7 +286,8 @@ fn no_cache(
     })?;
     stages.encode_ms = milliseconds(encode);
     let timing = format!(
-        "event_body;dur={:.4}, event_resume;dur={:.4}, event_queue;dur={:.4}, event_dispatch;dur={:.4}, event_service;dur={:.4}, event_prepare;dur={:.4}, event_begin;dur={:.4}, event_work;dur={:.4}, event_commit;dur={:.4}, event_encode;dur={:.4}",
+        "event_group;desc=\"{} events\", event_body;dur={:.4}, event_resume;dur={:.4}, event_queue;dur={:.4}, event_dispatch;dur={:.4}, event_service;dur={:.4}, event_prepare;dur={:.4}, event_begin;dur={:.4}, event_work;dur={:.4}, event_commit;dur={:.4}, event_encode;dur={:.4}",
+        stages.group_size,
         stages.body_ms,
         stages.resume_ms,
         stages.queue_ms,
@@ -356,6 +357,10 @@ pub(super) async fn ingest(
         .get::<crate::permissions::Principal>()
         .cloned()
         .unwrap_or_else(crate::permissions::Principal::legacy);
+    let routing_payment = request
+        .extensions()
+        .get::<crate::partition_api::RoutingPayment>()
+        .cloned();
     let body_started = Instant::now();
     let body = axum::body::to_bytes(
         request.into_body(),
@@ -383,29 +388,36 @@ pub(super) async fn ingest(
     })?;
     let store = event_store(&state)?;
     let body_ms = milliseconds(body_started);
+    let event: PaymentEvent = serde_json::from_slice(&body).map_err(|error| {
+        if error.is_data() {
+            ApiError::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "invalid_event",
+                "Invalid event fields, payment data or source",
+            )
+        } else {
+            json_error(error)
+        }
+    })?;
+    if !principal.writes_source(event.source) {
+        return Err(ApiError::new(
+            StatusCode::FORBIDDEN,
+            "source_forbidden",
+            "Credential cannot write this source",
+        ));
+    }
+    if let Some(expected) = routing_payment
+        && (event.payment.id != expected.0 || !crate::partition_api::valid_event_id(&event))
+    {
+        return Err(ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_partition_identity",
+            "Payment routing header must match the body and event ID must start with SHA256(payment ID) followed by ':'",
+        ));
+    }
     let (receipt, mut stages) = state
         .event_queue
-        .run(state.workers.clone(), move || {
-            let event: PaymentEvent = serde_json::from_slice(&body).map_err(|error| {
-                if error.is_data() {
-                    ApiError::new(
-                        StatusCode::UNPROCESSABLE_ENTITY,
-                        "invalid_event",
-                        "Invalid event fields, payment data or source",
-                    )
-                } else {
-                    json_error(error)
-                }
-            })?;
-            if !principal.writes_source(event.source) {
-                return Err(ApiError::new(
-                    StatusCode::FORBIDDEN,
-                    "source_forbidden",
-                    "Credential cannot write this source",
-                ));
-            }
-            store.apply_profiled(event).map_err(storage_error)
-        })
+        .ingest(store, state.workers.clone(), event)
         .await?;
     stages.body_ms = body_ms;
     no_cache(receipt, stages)

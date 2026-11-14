@@ -317,6 +317,22 @@ pub(super) async fn unauthorized(
     )
     .await
 }
+pub(super) async fn reject_external(
+    config: &Config,
+    drains: &Arc<Semaphore>,
+    request: Request,
+    status: StatusCode,
+    code: &'static str,
+    message: &'static str,
+) -> Response {
+    reject_body(
+        config,
+        drains,
+        request,
+        ApiError::new(status, code, message),
+    )
+    .await
+}
 async fn reject_body(
     config: &Config,
     drains: &Arc<Semaphore>,
@@ -638,7 +654,8 @@ fn json_error(error: serde_json::Error) -> ApiError {
         event_routes::history,
         event_routes::investigate,
         event_routes::cases,
-        event_routes::update_case
+        event_routes::update_case,
+        export_metrics
     ),
     components(schemas(
         ReconcileRequest,
@@ -678,6 +695,20 @@ pub(super) fn api_doc() -> serde_json::Value {
     doc["paths"]["/health"] = json!({"get":{"responses":{"200":{"description":"Service is alive","content":{"application/json":{"schema":{"type":"object","required":["status"],"properties":{"status":{"type":"string","enum":["ok"]}}}}}}}}});
     doc["paths"]["/openapi.json"] =
         json!({"get":{"responses":{"200":{"description":"Generated OpenAPI contract"}}}});
+    doc["paths"]["/v1/partitions"] = json!({"get":{"security":[{"bearerAuth":[]}],"description":"Available for partition-enabled tenants. Lists partition indices for explicit scoped scans.","responses":{"200":{"description":"Partition count, routing and event identity contract"},"404":{"description":"Partition mode is not enabled"}}}});
+    doc["paths"]["/v1/events"]["post"]["parameters"] = json!([{"name":"X-Reconcile-Payment-Id","in":"header","required":false,"description":"Required in partition mode: percent-encoded UTF-8 payment ID, equal to body payment.id. event_id must start with lowercase SHA256(payment.id) plus colon and a stable unique suffix.","schema":{"type":"string"}}]);
+    for path in [
+        "/v1/cases",
+        "/v1/discrepancies",
+        "/metrics",
+        "/v1/storage-health",
+    ] {
+        let operation = &mut doc["paths"][path]["get"];
+        if !operation["parameters"].is_array() {
+            operation["parameters"] = json!([]);
+        }
+        operation["parameters"].as_array_mut().unwrap().push(json!({"name":"X-Reconcile-Partition","in":"header","required":false,"description":"Required in partition mode. Zero-based index from GET /v1/partitions. Response and pagination cover only this partition.","schema":{"type":"integer","minimum":0}}));
+    }
     doc
 }
 #[cfg(test)]

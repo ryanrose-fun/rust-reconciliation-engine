@@ -21,6 +21,9 @@ pub struct Tenant {
     #[serde(default)]
     pub credentials: Vec<Credential>,
     pub database: PathBuf,
+    /// Opt-in fixed partition count; zero preserves existing single-file storage.
+    #[serde(default)]
+    pub partitions: usize,
 }
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -70,6 +73,12 @@ pub fn build(
     // have a distinct canonical parent directory, preventing file aliases.
     let mut directories = std::collections::HashSet::new();
     for tenant in &entries {
+        if tenant.partitions > 64 {
+            return Err("At most 64 partitions per tenant".into());
+        }
+        if tenant.partitions > 0 && tenant.database.exists() {
+            return Err("Partition mode requires a fresh directory; migrate existing single-file data explicitly".into());
+        }
         if tenant.id.is_empty()
             || tenant.id.len() > 64
             || !tenant
@@ -125,12 +134,47 @@ pub fn build(
         c.api_key = None;
         c.scoped_auth = true;
         c.event_db = tenant.database.clone();
-        let store = Arc::new(reconcile_cli::events::EventStore::open(
-            &c.event_db,
-            c.event_wait,
-        )?);
-        let queue = Arc::new(routes::EventQueue::new(c.event_queue_capacity));
-        let router = routes::router_with_queue(c, store, queue.clone());
+        let router = if tenant.partitions > 0 {
+            let partitioned = reconcile_cli::events::PartitionedStore::open(
+                &tenant
+                    .database
+                    .parent()
+                    .ok_or("Database directory required")?
+                    .join("partitions"),
+                &tenant.id,
+                tenant.partitions,
+                c.event_wait,
+            )?;
+            let mut partitions = Vec::new();
+            for store in partitioned.into_stores() {
+                let queue = Arc::new(routes::EventQueue::new(c.event_queue_capacity));
+                partitions.push(routes::router_with_queue(
+                    c.clone(),
+                    Arc::new(store),
+                    queue.clone(),
+                ));
+                queues.push(queue);
+            }
+            crate::partition_api::router(tenant.id.clone(), partitions, c.clone())
+        } else {
+            if tenant
+                .database
+                .parent()
+                .ok_or("Database directory required")?
+                .join("partitions/layout.sqlite3")
+                .exists()
+            {
+                return Err("Existing partition layout requires partitions configuration".into());
+            }
+            let store = Arc::new(reconcile_cli::events::EventStore::open(
+                &c.event_db,
+                c.event_wait,
+            )?);
+            let queue = Arc::new(routes::EventQueue::new(c.event_queue_capacity));
+            let router = routes::router_with_queue(c, store, queue.clone());
+            queues.push(queue);
+            router
+        };
         for credential in tenant.keys()? {
             routers.push((
                 Sha256::digest(credential.api_key.as_bytes()).into(),
@@ -141,7 +185,6 @@ pub fn build(
                 router.clone(),
             ));
         }
-        queues.push(queue);
     }
     let router = Router::new()
         .route(

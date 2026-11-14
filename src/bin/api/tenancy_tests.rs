@@ -34,6 +34,7 @@ async fn scoped_credentials_enforce_sources_read_only_audits_and_investigation_i
     let (router, queues) = build(
         &crate::config::Config::default(),
         vec![Tenant {
+            partitions: 0,
             id: "scoped".into(),
             api_key: String::new(),
             credentials,
@@ -233,12 +234,14 @@ async fn tenants_isolate_events_lookups_reports_metrics_and_restarts() {
     let entries = || {
         vec![
             Tenant {
+                partitions: 0,
                 id: "a".into(),
                 credentials: vec![],
                 api_key: a.clone(),
                 database: root.join("a/events.sqlite3"),
             },
             Tenant {
+                partitions: 0,
                 id: "b".into(),
                 credentials: vec![],
                 api_key: b.clone(),
@@ -339,12 +342,14 @@ async fn rejects_reused_tenant_keys_and_database_directories() {
     let root = std::env::temp_dir();
     let entries = vec![
         Tenant {
+            partitions: 0,
             id: "a".into(),
             credentials: vec![],
             api_key: "a".repeat(32),
             database: root.join("events.sqlite3"),
         },
         Tenant {
+            partitions: 0,
             id: "b".into(),
             credentials: vec![],
             api_key: "b".repeat(32),

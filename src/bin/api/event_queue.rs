@@ -12,6 +12,7 @@ use tokio::sync::Semaphore;
 
 #[derive(Clone, Debug, Default, Serialize)]
 pub(crate) struct EventStages {
+    pub group_size: usize,
     pub body_ms: f64,
     pub resume_ms: f64,
     pub queue_ms: f64,
@@ -27,6 +28,7 @@ pub(crate) struct EventQueue {
     capacity: usize,
     slots: Arc<Semaphore>,
     writer: Arc<Semaphore>,
+    pending: std::sync::Mutex<Pending>,
 }
 struct Cancellation(Arc<AtomicBool>);
 impl Drop for Cancellation {
@@ -37,6 +39,7 @@ impl Drop for Cancellation {
 impl EventQueue {
     pub(crate) fn new(waiting_capacity: usize) -> Self {
         Self {
+            pending: std::sync::Mutex::new(Pending::default()),
             capacity: waiting_capacity + 1,
             slots: Arc::new(Semaphore::new(waiting_capacity + 1)),
             writer: Arc::new(Semaphore::new(1)),
@@ -110,6 +113,7 @@ impl EventQueue {
             Ok((
                 value,
                 EventStages {
+                    group_size: 1,
                     body_ms: 0.,
                     resume_ms: 0.,
                     queue_ms,
@@ -139,3 +143,7 @@ impl EventQueue {
 #[cfg(test)]
 #[path = "event_queue/tests.rs"]
 mod tests;
+
+#[path = "event_queue/group.rs"]
+mod group;
+use group::Pending;

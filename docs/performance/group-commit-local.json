@@ -1,0 +1,101 @@
+{
+  "cases": [
+    {
+      "batch_size": 1,
+      "events": 4096,
+      "events_per_second": 602.6491698309059,
+      "reopen_validation": true,
+      "round": 0,
+      "seconds": 6.7966575
+    },
+    {
+      "batch_size": 8,
+      "events": 4096,
+      "events_per_second": 2614.172683593137,
+      "reopen_validation": true,
+      "round": 0,
+      "seconds": 1.5668437
+    },
+    {
+      "batch_size": 32,
+      "events": 4096,
+      "events_per_second": 4983.546145921784,
+      "reopen_validation": true,
+      "round": 0,
+      "seconds": 0.8219047
+    },
+    {
+      "batch_size": 128,
+      "events": 4096,
+      "events_per_second": 6072.431236313495,
+      "reopen_validation": true,
+      "round": 0,
+      "seconds": 0.6745239
+    },
+    {
+      "batch_size": 1,
+      "events": 4096,
+      "events_per_second": 705.7896166940336,
+      "reopen_validation": true,
+      "round": 1,
+      "seconds": 5.8034291
+    },
+    {
+      "batch_size": 8,
+      "events": 4096,
+      "events_per_second": 2625.1959203071015,
+      "reopen_validation": true,
+      "round": 1,
+      "seconds": 1.5602645000000002
+    },
+    {
+      "batch_size": 32,
+      "events": 4096,
+      "events_per_second": 5936.479667557139,
+      "reopen_validation": true,
+      "round": 1,
+      "seconds": 0.6899712
+    },
+    {
+      "batch_size": 128,
+      "events": 4096,
+      "events_per_second": 8366.530853523001,
+      "reopen_validation": true,
+      "round": 1,
+      "seconds": 0.4895697
+    },
+    {
+      "batch_size": 1,
+      "events": 4096,
+      "events_per_second": 677.7420573296977,
+      "reopen_validation": true,
+      "round": 2,
+      "seconds": 6.0435972
+    },
+    {
+      "batch_size": 8,
+      "events": 4096,
+      "events_per_second": 3027.529228665971,
+      "reopen_validation": true,
+      "round": 2,
+      "seconds": 1.3529184
+    },
+    {
+      "batch_size": 32,
+      "events": 4096,
+      "events_per_second": 4980.144470392153,
+      "reopen_validation": true,
+      "round": 2,
+      "seconds": 0.8224661
+    },
+    {
+      "batch_size": 128,
+      "events": 4096,
+      "events_per_second": 8263.859214182849,
+      "reopen_validation": true,
+      "round": 2,
+      "seconds": 0.4956522
+    }
+  ],
+  "scope": "Local Windows direct SQLite storage, FULL synchronization, 4096 unique internal-only payments per case. Compilation ran concurrently during part of this exploratory measurement; not an isolated throughput comparison or HTTP test."
+}
