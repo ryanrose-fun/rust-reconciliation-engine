@@ -9,8 +9,11 @@ $server = $null
 try {
     cargo build --locked --features client --bin api --example partitioned_integration
     if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
-    $run = Join-Path $root ('target/partitioned-integration-' + [Guid]::NewGuid().ToString('N'))
-    $null = New-Item -ItemType Directory -Path $run
+    $localState = [Environment]::GetFolderPath('LocalApplicationData')
+    if (-not $localState) { throw 'Local application data directory is unavailable' }
+    $run = Join-Path $localState ('Reconcile/integration-runs/' + [Guid]::NewGuid().ToString('N'))
+    $null = New-Item -ItemType Directory -Force -Path $run
+    Write-Host "Demo database directory: $run"
     $roles = @('InternalWriter','ProviderWriter','Auditor')
     $credentials = @($roles | ForEach-Object { @{ id = $_; role = $_; api_key = ([Guid]::NewGuid().ToString('N') + [Guid]::NewGuid().ToString('N')) } })
     $config = @(@{ id = 'demo'; partitions = $Partitions; database = (Join-Path $run 'events.sqlite3'); credentials = $credentials })

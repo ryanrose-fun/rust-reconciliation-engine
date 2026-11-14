@@ -141,11 +141,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let receiver = tokio::spawn(async move { axum::serve(listener, app).await });
     let mut workers = Vec::new();
     for index in 0..count {
-        let store = Arc::new(EventStore::open(
-            root.join(format!("partitions/partition-{index:02}.sqlite3")),
-            Duration::from_secs(30),
-        )?);
-        workers.push(WebhookWorker::new(store, &endpoint, secret.clone())?);
+        let path = root
+            .join("partitions")
+            .join(format!("partition-{index:02}.sqlite3"));
+        println!("Preparing webhook worker for partition {index}...");
+        let store = Arc::new(
+            EventStore::open(&path, Duration::from_secs(30)).map_err(|error| {
+                format!("Opening webhook partition {}: {error:?}", path.display())
+            })?,
+        );
+        workers.push(
+            WebhookWorker::new(store, &endpoint, secret.clone()).map_err(|error| {
+                format!(
+                    "Configuring webhook partition {}: {error:?}",
+                    path.display()
+                )
+            })?,
+        );
     }
     // Persist every event before sending. Subsequent retries reuse exact IDs and bodies.
     let plan: Vec<Vec<PaymentEvent>> = (0..32)

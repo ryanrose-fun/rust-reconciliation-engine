@@ -10,7 +10,7 @@ From the repository root in Windows PowerShell:
 .\examples\run-partitioned-integration.ps1 -Partitions 4
 ```
 
-The launcher builds the API and example, creates an isolated directory under `target`, generates checkout/provider/auditor credentials, starts a loopback API and runs the simulation. It stops its own API process afterwards and restores the environment variables it changed. It does not change your existing tenant databases. `tenants.json` contains secrets: keep the run directory private.
+The launcher builds the API and example, creates an isolated directory under `%LOCALAPPDATA%\Reconcile\integration-runs` (outside OneDrive), generates checkout/provider/auditor credentials, starts a loopback API and runs the simulation. It stops its own API process afterwards and restores the environment variables it changed. It does not change your existing tenant databases. `tenants.json` contains secrets: keep the run directory private.
 
 The demonstration creates 32 payments and uses eight concurrent producers. It sends:
 
