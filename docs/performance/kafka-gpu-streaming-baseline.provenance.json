@@ -1,0 +1,30 @@
+{
+  "measured_build_sha256": {
+    "target/release/deps/kafka_gpu_stream-72788becc78f8f9a.exe": "dec128bdce2a106b3c439f0ff5b8c7d030c7466e794a94f9178cab8833cffa34",
+    "src/streaming/store.rs": "de5a4065b282b059d108920687885db80b72f1e6686e8cf706c844db9abd303e",
+    "Cargo.lock": "a05a93cf87b47994a242a627f484c84ebc5e3c5c9bf56469a8e2f5bbabbca4d2",
+    "target/release/payment-stream.exe": "46906814dcdce16866cc31a97ba213dce8705d221ac1c9fda35e84d0f0a667f3",
+    "tests/kafka_gpu_stream.rs": "43166463e23c3a10c4e36e8fa97887ca0e0b6c732f88c1a339bc62ed3d49aac1",
+    "src/streaming.rs": "464967c08c123634a42404490dfa607276eea0dda29b5d9f3905487d3241f568",
+    "target/release/api.exe": "56f583e487eec45b1c8fb4af876963abd81c9149c4aba9d137d487492effaeed"
+  },
+  "kafka_archive_sha512": "23b241098672d828ca86a6dd1dd99102fcdb9de8680ecf213b47251a7ae7a342343cf41adf6fee9f920d171ae13f94c39475165f5a246e1a46609a7d9d5a6811",
+  "burst_seconds": 10,
+  "date": "2026-11-14",
+  "transport": "Windows host to WSL private IP; GPU API loopback",
+  "duration_seconds": 180,
+  "base_commit": "c7fc6cdf29363fa859e546f73b9eac1027c907d6",
+  "gpu": "RTX 5070 Laptop GPU",
+  "notes": [
+    "One sustained run; no OS cache flush; shared development laptop.",
+    "Scheduled generation with measured lag, not a certified fixed-arrival capacity result.",
+    "Forced process restart, not power-loss or multi-broker failover."
+  ],
+  "burst_payments_per_source_per_second": 25000,
+  "replication_factor": 1,
+  "steady_payments_per_source_per_second": 5000,
+  "generator": "two synchronized Tokio tasks using production generator library",
+  "cpu": "Intel Core i7-14650HX",
+  "durability": "GPU journal and cursor SQLite WAL synchronous FULL",
+  "broker": "Apache Kafka 4.0.1"
+}

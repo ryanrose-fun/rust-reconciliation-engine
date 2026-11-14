@@ -1,0 +1,33 @@
+{
+  "measured_build_sha256": {
+    "target/release/deps/kafka_gpu_stream-72788becc78f8f9a.exe": "84f96a3362cd3b65e92bf76509b101df049378572e7db93d191d02be5f3f19c2",
+    "target/release/api.exe": "5136d6ff0f711bf2da52cc2b2dde6f21009f15a8796d764801d7279a59da90ca",
+    "tests/kafka_gpu_stream.rs": "9a1a0ad7adcacd357d1a69351fd81519fb48a79704a6a2ae9e5d4064ddea3ce8",
+    "Cargo.lock": "a05a93cf87b47994a242a627f484c84ebc5e3c5c9bf56469a8e2f5bbabbca4d2",
+    "target/release/payment-stream.exe": "b0f14e552d032c31d6da3ad78dbccd4517d8bbddc7dd3e3ecf0923295a0fc7c3",
+    "src/streaming.rs": "5d29aee7142bf6cf91272a390acf039ef347d86d83463b7ac93c0af1a5d915dd",
+    "src/streaming/store.rs": "de5a4065b282b059d108920687885db80b72f1e6686e8cf706c844db9abd303e"
+  },
+  "kafka_archive_sha512": "23b241098672d828ca86a6dd1dd99102fcdb9de8680ecf213b47251a7ae7a342343cf41adf6fee9f920d171ae13f94c39475165f5a246e1a46609a7d9d5a6811",
+  "burst_seconds": 10,
+  "date": "2026-11-14",
+  "transport": "Windows host to WSL private IP; GPU API loopback",
+  "duration_seconds": 180,
+  "base_commit": "c7fc6cdf29363fa859e546f73b9eac1027c907d6",
+  "gpu": "RTX 5070 Laptop GPU",
+  "notes": [
+    "One sustained run; no OS cache flush; shared development laptop.",
+    "Scheduled generation with measured lag, not a certified fixed-arrival capacity result.",
+    "Forced process restart, not power-loss or multi-broker failover.",
+    "Nonblocking per-source fetch; sleep only when both sources are idle.",
+    "Includes strict loopback URL validation and a 30-second Kafka retry deadline added after baseline.",
+    "Final snapshot sample uses a deterministic mixed stride; validation is outside the timed ingestion window."
+  ],
+  "burst_payments_per_source_per_second": 25000,
+  "replication_factor": 1,
+  "steady_payments_per_source_per_second": 5000,
+  "generator": "two synchronized Tokio tasks using production generator library",
+  "cpu": "Intel Core i7-14650HX",
+  "durability": "GPU journal and cursor SQLite WAL synchronous FULL",
+  "broker": "Apache Kafka 4.0.1"
+}

@@ -43,3 +43,6 @@ pub mod outbox;
 
 #[cfg(feature = "client")]
 pub mod webhooks;
+
+#[cfg(feature = "streaming")]
+pub mod streaming;
