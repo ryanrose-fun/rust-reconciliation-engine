@@ -7,6 +7,13 @@ pub(super) fn routes() -> Router<AppState> {
         .route("/v1/gpu/events", post(ingest))
         .route("/v1/gpu/payments/{payment_id}", get(payment))
         .route("/v1/gpu/health", get(health))
+        .route("/v1/gpu/checkpoint", post(checkpoint))
+}
+#[utoipa::path(post,path="/v1/gpu/checkpoint",security(("bearerAuth"=[])),responses((status=200,description="GPU checkpoint atomically committed",body=serde_json::Value),(status=503,description="Checkpoint failed; restart required")))]
+async fn checkpoint(State(state): State<AppState>) -> Result<Response, ApiError> {
+    Ok(response(
+        client(&state)?.checkpoint().await.map_err(map_error)?,
+    ))
 }
 fn client(state: &AppState) -> Result<&Arc<Client>, ApiError> {
     state.config.gpu.as_ref().ok_or_else(|| {
@@ -130,7 +137,7 @@ async fn health(State(state): State<AppState>) -> Result<Response, ApiError> {
 }
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(ingest, payment, health),
+    paths(ingest, payment, health, checkpoint),
     components(schemas(Submit, crate::gpu_service::GpuEvent))
 )]
 pub(super) struct GpuDoc;

@@ -55,7 +55,8 @@ pub enum Error {
 }
 type Answer = Result<serde_json::Value, Error>;
 enum Command {
-    Submit(Submit, oneshot::Sender<Answer>),
+    Submit(Prepared, oneshot::Sender<Answer>),
+    Checkpoint(oneshot::Sender<Answer>),
     Get(String, oneshot::Sender<Answer>),
     Health(oneshot::Sender<Answer>),
     Stop(oneshot::Sender<()>),
@@ -63,6 +64,7 @@ enum Command {
 pub struct Client {
     tx: mpsc::SyncSender<Command>,
     alive: Arc<AtomicBool>,
+    preparation_slots: Arc<tokio::sync::Semaphore>,
 }
 impl Client {
     pub fn start(path: PathBuf, capacity: usize) -> Result<Arc<Self>, String> {
@@ -111,7 +113,11 @@ impl Client {
         started
             .recv()
             .map_err(|_| "GPU worker did not initialize")??;
-        Ok(Arc::new(Self { tx, alive }))
+        Ok(Arc::new(Self {
+            tx,
+            alive,
+            preparation_slots: Arc::new(tokio::sync::Semaphore::new(32)),
+        }))
     }
     async fn call(&self, make: impl FnOnce(oneshot::Sender<Answer>) -> Command) -> Answer {
         if !self.alive.load(Ordering::Acquire) {
@@ -125,7 +131,22 @@ impl Client {
         rx.await.unwrap_or(Err(Error::Unavailable))
     }
     pub async fn submit(&self, r: Submit) -> Answer {
+        let slot = self
+            .preparation_slots
+            .clone()
+            .try_acquire_owned()
+            .map_err(|_| Error::Busy)?;
+        let r = tokio::task::spawn_blocking(move || {
+            let mut prepared = Prepared::new(r)?;
+            prepared._slot = Some(slot);
+            Ok::<_, Error>(prepared)
+        })
+        .await
+        .map_err(|_| Error::Unavailable)??;
         self.call(|tx| Command::Submit(r, tx)).await
+    }
+    pub async fn checkpoint(&self) -> Answer {
+        self.call(Command::Checkpoint).await
     }
     pub async fn get(&self, id: String) -> Answer {
         self.call(|tx| Command::Get(id, tx)).await
@@ -136,8 +157,36 @@ impl Client {
     pub async fn shutdown(&self) {
         let sender = self.tx.clone();
         let (tx, rx) = oneshot::channel();
-        let _ = tokio::task::spawn_blocking(move || sender.send(Command::Stop(tx))).await;
+        let _ = tokio::task::spawn_blocking(move || sender.send(Command::Stop(tx)).map_err(|_| ()))
+            .await;
         let _ = rx.await;
+    }
+}
+struct Prepared {
+    // Owned by the queued command, not the HTTP waiter: cancellation must not
+    // free admission while preparation or an admitted update is still running.
+    _slot: Option<tokio::sync::OwnedSemaphorePermit>,
+    request: Submit,
+    input: String,
+    input_sha: String,
+    event_json: Vec<String>,
+    preparation_ms: f64,
+}
+impl Prepared {
+    fn new(request: Submit) -> Result<Self, Error> {
+        let start = std::time::Instant::now();
+        validate(&request)?;
+        let input = canonical(&request);
+        let input_sha = format!("{:x}", Sha256::digest(input.as_bytes()));
+        let event_json = request.events.iter().map(canonical).collect();
+        Ok(Self {
+            _slot: None,
+            request,
+            input,
+            input_sha,
+            event_json,
+            preparation_ms: start.elapsed().as_secs_f64() * 1000.0,
+        })
     }
 }
 fn canonical<T: Serialize>(x: &T) -> String {
@@ -236,7 +285,8 @@ fn run(
     db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA application_id=1196447025;
         CREATE TABLE IF NOT EXISTS gpu_meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1), format INTEGER NOT NULL, shader TEXT NOT NULL, capacity INTEGER NOT NULL);
         CREATE TABLE IF NOT EXISTS gpu_requests(seq INTEGER PRIMARY KEY AUTOINCREMENT, request_id TEXT NOT NULL UNIQUE, input TEXT NOT NULL, input_sha256 TEXT NOT NULL, computed TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS gpu_event_ids(event_id TEXT PRIMARY KEY, canonical TEXT NOT NULL);").map_err(|e|e.to_string())?;
+        CREATE TABLE IF NOT EXISTS gpu_event_ids(event_id TEXT PRIMARY KEY, canonical TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS gpu_checkpoint(singleton INTEGER PRIMARY KEY CHECK(singleton=1), seq INTEGER NOT NULL, chain TEXT NOT NULL, identities TEXT NOT NULL, payload BLOB NOT NULL, sha256 TEXT NOT NULL);").map_err(|e|e.to_string())?;
     let integrity: String = db
         .query_row("PRAGMA quick_check", [], |r| r.get(0))
         .map_err(|e| e.to_string())?;
@@ -268,6 +318,32 @@ fn run(
     let adapter = gpu.info.name.clone();
     let mut worker = Worker::new(&gpu, capacity, MAX_EVENTS);
     let mut committed = 0i64;
+    let mut chain = String::new();
+    let checkpoint: Option<(i64, String, String, Vec<u8>, String)> = db
+        .query_row(
+            "SELECT seq,chain,identities,payload,sha256 FROM gpu_checkpoint WHERE singleton=1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+        )
+        .optional()
+        .map_err(|e| e.to_string())?;
+    let checkpoint_seq = checkpoint.as_ref().map_or(0, |c| c.0);
+    if let Some((seq, _, identities, payload, digest)) = &checkpoint {
+        let (watermark, expected) = identities
+            .split_once(':')
+            .ok_or("Invalid checkpoint identity manifest")?;
+        let watermark: i64 = watermark
+            .parse()
+            .map_err(|_| "Invalid identity watermark")?;
+        if *seq <= 0
+            || watermark < 0
+            || format!("{:x}", Sha256::digest(payload)) != *digest
+            || identity_digest(&db, watermark)? != expected
+        {
+            return Err("GPU checkpoint checksum/identity failure".into());
+        }
+        worker.restore(payload)?;
+    }
     let initialized_ms = startup.elapsed().as_secs_f64() * 1000.0;
     let mut replay_compute_ms = 0.0;
     {
@@ -286,6 +362,14 @@ fn run(
             if seq != committed + 1 || format!("{:x}", Sha256::digest(input.as_bytes())) != digest {
                 return Err("GPU journal sequence or checksum failure".into());
             }
+            chain = chain_next(&chain, seq, &digest, &stored);
+            if seq <= checkpoint_seq {
+                if seq == checkpoint_seq && chain != checkpoint.as_ref().unwrap().1 {
+                    return Err("GPU checkpoint journal boundary mismatch".into());
+                }
+                committed = seq;
+                continue;
+            }
             let request: Submit = serde_json::from_str(&input).map_err(|e| e.to_string())?;
             validate(&request).map_err(|_| "Invalid journal request")?;
             if request.request_id != id {
@@ -300,11 +384,9 @@ fn run(
             }
             for event in request.events {
                 let saved: Option<String> = db
-                    .query_row(
-                        "SELECT canonical FROM gpu_event_ids WHERE event_id=?1",
-                        [&event.event_id],
-                        |r| r.get(0),
-                    )
+                    .prepare_cached("SELECT canonical FROM gpu_event_ids WHERE event_id=?1")
+                    .map_err(|e| e.to_string())?
+                    .query_row([&event.event_id], |r| r.get(0))
                     .optional()
                     .map_err(|e| e.to_string())?;
                 if saved.as_deref() != Some(canonical(&event).as_str()) {
@@ -314,10 +396,21 @@ fn run(
             committed = seq;
         }
     }
+    if committed < checkpoint_seq {
+        return Err("GPU checkpoint exceeds journal boundary".into());
+    }
+    let mut checkpoint_at = checkpoint_seq;
+    let checkpoint_every: i64 = std::env::var("RECONCILE_GPU_CHECKPOINT_BATCHES")
+        .unwrap_or("256".into())
+        .parse()
+        .map_err(|_| "Invalid checkpoint interval")?;
+    if !(1..=1000000).contains(&checkpoint_every) {
+        return Err("Checkpoint interval must be 1..1000000".into());
+    }
     if profile {
         eprintln!(
             "GPU_PROFILE {}",
-            serde_json::json!({"phase":"startup","batches":committed,"initialized_ms":initialized_ms,"total_ms":startup.elapsed().as_secs_f64()*1000.0,"replay_compute_ms":replay_compute_ms})
+            serde_json::json!({"phase":"startup","batches":committed,"checkpoint_sequence":checkpoint_seq,"replayed_batches":committed-checkpoint_seq,"initialized_ms":initialized_ms,"total_ms":startup.elapsed().as_secs_f64()*1000.0,"replay_compute_ms":replay_compute_ms})
         );
     }
     eprintln!("GPU ready: {adapter}; recovered {committed} committed batches");
@@ -325,7 +418,30 @@ fn run(
     while let Ok(command) = rx.recv() {
         match command {
             Command::Health(reply) => {
-                let _=reply.send(Ok(serde_json::json!({"status":"ready","backend":"gpu","adapter":adapter,"committed_batches":committed,"capacity":capacity,"durability":"sqlite-wal-full","recovered_before_ready":true})));
+                let _=reply.send(Ok(serde_json::json!({"status":"ready","backend":"gpu","adapter":adapter,"committed_batches":committed,"checkpoint_sequence":checkpoint_at,"capacity":capacity,"durability":"sqlite-wal-full","recovered_before_ready":true})));
+            }
+            Command::Checkpoint(reply) => {
+                if committed == 0 {
+                    let _ = reply.send(Err(Error::Invalid(
+                        "No committed state to checkpoint".into(),
+                    )));
+                    continue;
+                }
+                if checkpoint_at == committed {
+                    let _ = reply.send(Ok(serde_json::json!({"checkpoint_sequence":committed})));
+                    continue;
+                }
+                match save_checkpoint(&mut db, &worker, committed, &chain) {
+                    Ok(()) => {
+                        checkpoint_at = committed;
+                        let _ =
+                            reply.send(Ok(serde_json::json!({"checkpoint_sequence":committed})));
+                    }
+                    Err(e) => {
+                        let _ = reply.send(Err(Error::Unavailable));
+                        return Err(e);
+                    }
+                }
             }
             Command::Get(id, reply) => {
                 let response = worker
@@ -343,7 +459,22 @@ fn run(
                 let result = apply(&mut db, &mut worker, &request);
                 match result {
                     Ok(answer) => {
+                        if !answer.duplicate {
+                            chain = chain_next(
+                                &chain,
+                                answer.commit_sequence,
+                                &request.input_sha,
+                                &canonical(&answer.gpu),
+                            );
+                        }
                         committed = committed.max(answer.commit_sequence);
+                        if committed - checkpoint_at >= checkpoint_every {
+                            if let Err(e) = save_checkpoint(&mut db, &worker, committed, &chain) {
+                                let _ = reply.send(Err(Error::Unavailable));
+                                return Err(e);
+                            }
+                            checkpoint_at = committed;
+                        }
                         let _ = reply.send(Ok(serde_json::to_value(answer).unwrap()));
                     }
                     Err(ApplyError::User(e)) => {
@@ -359,6 +490,76 @@ fn run(
     }
     Ok(())
 }
+fn chain_next(previous: &str, seq: i64, input_sha: &str, computed: &str) -> String {
+    let mut h = Sha256::new();
+    h.update(previous.as_bytes());
+    h.update(seq.to_le_bytes());
+    h.update(input_sha.as_bytes());
+    h.update(Sha256::digest(computed.as_bytes()));
+    format!("{:x}", h.finalize())
+}
+fn identity_digest(db: &Connection, watermark: i64) -> Result<String, String> {
+    let mut statement = db
+        .prepare(
+            "SELECT rowid,event_id,canonical FROM gpu_event_ids WHERE rowid<=?1 ORDER BY rowid",
+        )
+        .map_err(|e| e.to_string())?;
+    let mut rows = statement.query([watermark]).map_err(|e| e.to_string())?;
+    let mut h = Sha256::new();
+    let mut count = 0i64;
+    while let Some(r) = rows.next().map_err(|e| e.to_string())? {
+        let id: i64 = r.get(0).map_err(|e| e.to_string())?;
+        let event: String = r.get(1).map_err(|e| e.to_string())?;
+        let canonical: String = r.get(2).map_err(|e| e.to_string())?;
+        count += 1;
+        if id != count {
+            return Err("GPU identity index has a gap".into());
+        }
+        h.update(id.to_le_bytes());
+        h.update((event.len() as u64).to_le_bytes());
+        h.update(event.as_bytes());
+        h.update((canonical.len() as u64).to_le_bytes());
+        h.update(canonical.as_bytes());
+    }
+    if count != watermark {
+        return Err("GPU identity index truncated".into());
+    }
+    Ok(format!("{:x}", h.finalize()))
+}
+fn save_checkpoint(
+    db: &mut Connection,
+    worker: &Worker<'_>,
+    seq: i64,
+    chain: &str,
+) -> Result<(), String> {
+    let start = std::time::Instant::now();
+    let payload = worker.checkpoint();
+    let digest = format!("{:x}", Sha256::digest(&payload));
+    let watermark: i64 = db
+        .query_row(
+            "SELECT coalesce(max(rowid),0) FROM gpu_event_ids",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    let identities = format!("{watermark}:{}", identity_digest(db, watermark)?);
+    let tx = db
+        .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
+        .map_err(|e| e.to_string())?;
+    tx.execute(
+        "INSERT OR REPLACE INTO gpu_checkpoint VALUES(1,?1,?2,?3,?4,?5)",
+        params![seq, chain, identities, payload, digest],
+    )
+    .map_err(|e| e.to_string())?;
+    tx.commit().map_err(|e| e.to_string())?;
+    if std::env::var_os("RECONCILE_GPU_PROFILE").is_some() {
+        eprintln!(
+            "GPU_PROFILE {}",
+            serde_json::json!({"phase":"checkpoint","sequence":seq,"bytes":payload.len(),"total_ms":start.elapsed().as_secs_f64()*1000.0})
+        );
+    }
+    Ok(())
+}
 enum ApplyError {
     User(Error),
     Fatal(String),
@@ -371,11 +572,11 @@ impl From<rusqlite::Error> for ApplyError {
 fn apply(
     db: &mut Connection,
     worker: &mut Worker<'_>,
-    request: &Submit,
+    prepared: &Prepared,
 ) -> Result<Reply, ApplyError> {
     let start = std::time::Instant::now();
-    validate(request).map_err(ApplyError::User)?;
-    let input = canonical(request);
+    let request = &prepared.request;
+    let input = &prepared.input;
     let existing: Option<(i64, String, String)> = db
         .query_row(
             "SELECT seq,input,computed FROM gpu_requests WHERE request_id=?1",
@@ -384,7 +585,7 @@ fn apply(
         )
         .optional()?;
     if let Some((seq, old, computed)) = existing {
-        if old != input {
+        if old != *input {
             return Err(ApplyError::User(Error::Conflict));
         }
         return Ok(Reply {
@@ -394,16 +595,16 @@ fn apply(
             gpu: serde_json::from_str(&computed).map_err(|e| ApplyError::Fatal(e.to_string()))?,
         });
     }
-    for event in &request.events {
-        let existing: Option<String> = db
-            .query_row(
-                "SELECT canonical FROM gpu_event_ids WHERE event_id=?1",
-                [&event.event_id],
-                |r| r.get(0),
-            )
-            .optional()?;
-        if existing.is_some_and(|old| old != canonical(event)) {
-            return Err(ApplyError::User(Error::Conflict));
+    {
+        let mut lookup =
+            db.prepare_cached("SELECT canonical FROM gpu_event_ids WHERE event_id=?1")?;
+        for (event, encoded) in request.events.iter().zip(&prepared.event_json) {
+            let existing: Option<String> = lookup
+                .query_row([&event.event_id], |r| r.get(0))
+                .optional()?;
+            if existing.is_some_and(|old| old != *encoded) {
+                return Err(ApplyError::User(Error::Conflict));
+            }
         }
     }
     let identity_ms = start.elapsed().as_secs_f64() * 1000.0;
@@ -419,16 +620,18 @@ fn apply(
         params![
             request.request_id,
             input,
-            format!("{:x}", Sha256::digest(input.as_bytes())),
+            prepared.input_sha,
             canonical(&computed)
         ],
     )?;
     let seq = tx.last_insert_rowid();
-    for event in &request.events {
-        tx.execute(
+    {
+        let mut insert = tx.prepare_cached(
             "INSERT OR IGNORE INTO gpu_event_ids(event_id,canonical) VALUES(?1,?2)",
-            params![event.event_id, canonical(event)],
         )?;
+        for (event, encoded) in request.events.iter().zip(&prepared.event_json) {
+            insert.execute(params![event.event_id, encoded])?;
+        }
     }
     let journal_ms = journal_start.elapsed().as_secs_f64() * 1000.0;
     let commit_start = std::time::Instant::now();
@@ -437,7 +640,7 @@ fn apply(
     if std::env::var_os("RECONCILE_GPU_PROFILE").is_some() {
         eprintln!(
             "GPU_PROFILE {}",
-            serde_json::json!({"phase":"apply","sequence":seq,"events":request.events.len(),"identity_ms":identity_ms,"compute_ms":compute_ms,"journal_ms":journal_ms,"commit_ms":commit_ms,"total_ms":start.elapsed().as_secs_f64()*1000.0})
+            serde_json::json!({"phase":"apply","sequence":seq,"events":request.events.len(),"preparation_ms":prepared.preparation_ms,"identity_ms":identity_ms,"compute_ms":compute_ms,"journal_ms":journal_ms,"commit_ms":commit_ms,"total_ms":start.elapsed().as_secs_f64()*1000.0})
         );
     }
     Ok(Reply {
@@ -452,11 +655,95 @@ fn apply(
 mod tests {
     use super::*;
     #[tokio::test]
+    async fn cancelled_waiter_keeps_admitted_slot_until_command_finishes() {
+        let (tx, rx) = mpsc::sync_channel(1);
+        let slots = Arc::new(tokio::sync::Semaphore::new(1));
+        let client = Arc::new(Client {
+            tx,
+            alive: Arc::new(AtomicBool::new(true)),
+            preparation_slots: slots.clone(),
+        });
+        let request:Submit=serde_json::from_value(serde_json::json!({"request_id":"r","events":[{"event_id":"e","source":"Internal","version":1,"payment":{"id":"p","amount_minor":1,"currency":"GBP","status":"Pending"}}]})).unwrap();
+        let task = tokio::spawn(async move { client.submit(request).await });
+        let command = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                if let Ok(c) = rx.try_recv() {
+                    break c;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        task.abort();
+        let _ = task.await;
+        assert_eq!(slots.available_permits(), 0);
+        drop(command);
+        assert_eq!(slots.available_permits(), 1);
+    }
+    #[test]
+    fn checkpoint_manifest_detects_changed_and_missing_identities() {
+        let db = Connection::open_in_memory().unwrap();
+        db.execute_batch("CREATE TABLE gpu_event_ids(event_id TEXT PRIMARY KEY,canonical TEXT NOT NULL); INSERT INTO gpu_event_ids VALUES('a','one'),('b','two');").unwrap();
+        let prefix = identity_digest(&db, 1).unwrap();
+        db.execute("INSERT INTO gpu_event_ids VALUES('c','three')", [])
+            .unwrap();
+        assert_eq!(identity_digest(&db, 1).unwrap(), prefix);
+        db.execute(
+            "UPDATE gpu_event_ids SET canonical='changed' WHERE event_id='a'",
+            [],
+        )
+        .unwrap();
+        assert_ne!(identity_digest(&db, 1).unwrap(), prefix);
+        db.execute("DELETE FROM gpu_event_ids WHERE event_id='a'", [])
+            .unwrap();
+        assert!(identity_digest(&db, 3).is_err());
+        assert_ne!(
+            chain_next("", 1, "input", "receipt"),
+            chain_next("", 2, "input", "receipt")
+        );
+        assert_ne!(
+            chain_next("", 1, "input", "receipt"),
+            chain_next("", 1, "input", "changed")
+        );
+    }
+    #[tokio::test]
+    async fn preparation_admission_is_bounded() {
+        let (tx, _rx) = mpsc::sync_channel(32);
+        let slots = Arc::new(tokio::sync::Semaphore::new(1));
+        let client = Client {
+            tx,
+            alive: Arc::new(AtomicBool::new(true)),
+            preparation_slots: slots.clone(),
+        };
+        let permit = slots.acquire().await.unwrap();
+        assert!(matches!(
+            client
+                .submit(Submit {
+                    request_id: "x".into(),
+                    events: vec![]
+                })
+                .await,
+            Err(Error::Busy)
+        ));
+        drop(permit);
+        assert!(matches!(
+            client
+                .submit(Submit {
+                    request_id: "x".into(),
+                    events: vec![]
+                })
+                .await,
+            Err(Error::Invalid(_))
+        ));
+    }
+    #[tokio::test]
     async fn bounded_queue_rejects_overload_and_closed_worker() {
         let (tx, rx) = mpsc::sync_channel(1);
         let client = Client {
             tx,
             alive: Arc::new(AtomicBool::new(true)),
+            preparation_slots: Arc::new(tokio::sync::Semaphore::new(32)),
         };
         let (reply, _) = oneshot::channel();
         client.tx.try_send(Command::Health(reply)).unwrap();

@@ -136,8 +136,24 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
         request(&server, "POST", "/v1/gpu/events", Some(seed.clone()), KEY).await;
     assert_eq!(code, 200);
     assert_eq!(original["gpu"]["receipts"][0]["status"], "Matched");
+    assert_eq!(
+        request(&server, "POST", "/v1/gpu/checkpoint", None, "wrong")
+            .await
+            .0,
+        401
+    );
+    assert_eq!(
+        request(&server, "POST", "/v1/gpu/checkpoint", None, KEY)
+            .await
+            .0,
+        200
+    );
     drop(server);
     server = start(&root);
+    assert_eq!(
+        request(&server, "GET", "/v1/gpu/health", None, KEY).await.1["checkpoint_sequence"],
+        1
+    );
     let state = request(&server, "GET", "/v1/gpu/payments/P1", None, KEY)
         .await
         .1;
@@ -346,6 +362,81 @@ async fn gpu_http_commit_crash_replay_and_fail_closed() {
             .unwrap(),
         "ok"
     );
+    // A checkpoint write failure must retain the previous complete checkpoint.
+    drop(db);
+    server = start(&root);
+    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_checkpoint BEFORE INSERT ON gpu_checkpoint BEGIN SELECT RAISE(ABORT,'injected checkpoint failure'); END;").unwrap();
+    drop(db);
+    assert_eq!(
+        request(&server, "POST", "/v1/gpu/checkpoint", None, KEY)
+            .await
+            .0,
+        503
+    );
+    drop(server);
+    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    db.execute_batch("DROP TRIGGER reject_checkpoint").unwrap();
+    let old: i64 = db
+        .query_row("SELECT seq FROM gpu_checkpoint", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(old, 1);
+    drop(db);
+    server = start(&root);
+    assert_eq!(
+        request(&server, "GET", "/v1/gpu/payments/P1", None, KEY)
+            .await
+            .1["internal"]["amount_minor"],
+        json!(u64::MAX)
+    );
+    // Concurrent preparation must not move event identity checks outside the
+    // single owner's serialized commit boundary.
+    let a = json!({"request_id":"race-a","events":[event("P2","Internal",1,10,"Completed","race-event")]});
+    let b = json!({"request_id":"race-b","events":[event("P2","Internal",1,20,"Completed","race-event")]});
+    let (a, b) = tokio::join!(
+        request(&server, "POST", "/v1/gpu/events", Some(a), KEY),
+        request(&server, "POST", "/v1/gpu/events", Some(b), KEY)
+    );
+    assert!((a.0 == 200 && b.0 == 409) || (a.0 == 409 && b.0 == 200));
+    let winner = if a.0 == 200 { 10 } else { 20 };
+    // Kill during checkpoint publication. Either complete checkpoint boundary is
+    // acceptable; a partial publication must never be used on restart.
+    let url = format!("{}/v1/gpu/checkpoint", server.url);
+    let pending = tokio::spawn(async move {
+        reqwest::Client::new()
+            .post(url)
+            .bearer_auth(KEY)
+            .send()
+            .await
+    });
+    tokio::time::sleep(Duration::from_millis(2)).await;
+    drop(server);
+    let _ = pending.await;
+    server = start(&root);
+    assert_eq!(
+        request(&server, "GET", "/v1/gpu/payments/P2", None, KEY)
+            .await
+            .1["internal"]["amount_minor"],
+        winner
+    );
+    assert_eq!(
+        request(&server, "POST", "/v1/gpu/checkpoint", None, KEY)
+            .await
+            .0,
+        200
+    );
+    drop(server);
+    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    let digest: String = db
+        .query_row("SELECT sha256 FROM gpu_checkpoint", [], |r| r.get(0))
+        .unwrap();
+    db.execute("UPDATE gpu_checkpoint SET sha256='corrupted'", [])
+        .unwrap();
+    drop(db);
+    failure_exit(command(&root).spawn().unwrap());
+    let db = rusqlite::Connection::open(root.join("gpu.sqlite3")).unwrap();
+    db.execute("UPDATE gpu_checkpoint SET sha256=?1", [digest])
+        .unwrap();
     db.execute(
         "UPDATE gpu_requests SET input_sha256='tampered' WHERE request_id='seed'",
         [],

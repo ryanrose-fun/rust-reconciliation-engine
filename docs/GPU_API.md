@@ -53,6 +53,7 @@ All GPU routes require the configured bearer token, including on loopback.
 | POST | `/v1/gpu/events` | Apply a batch and return a durably committed GPU result |
 | GET | `/v1/gpu/payments/{payment_id}` | Read current source values and result from GPU memory |
 | GET | `/v1/gpu/health` | GPU readiness, adapter, capacity and committed batch sequence |
+| POST | `/v1/gpu/checkpoint` | Atomically persist the current committed GPU state; returns its sequence |
 | GET | `/openapi.json` | Generated contract, including GPU routes in a GPU-enabled build |
 
 ```json
@@ -102,14 +103,17 @@ the result code unchanged still receives a receipt but emits no result-change ro
 - If storage fails after GPU mutation, the GPU worker stops serving reads/writes.
   Restart replays only committed journal entries. Unacknowledged work must be retried.
 - Recovery verifies SQLite integrity, journal sequence, input SHA-256, event identity
-  records, shader/format/capacity metadata and regenerated GPU receipts/change rows.
+  records and shader/format/capacity metadata. With a checkpoint it verifies its payload,
+  identity manifest and journal-prefix chain, restores GPU buffers with readback
+  verification, then regenerates receipts/change rows for the remaining tail.
   A mismatch prevents startup. An advisory file lock prevents two cooperating API
   processes from owning the same journal.
 
 ## Limits and deployment scope
 
 One GPU-backed tenant per process, one discrete GPU, 1..2,000,000 resident payment
-IDs, 1..4,096 events per request, and a 32-command actor queue. There may be only
+IDs, 1..4,096 events per request, a 32-command actor queue and 32 admitted preparation
+slots held until the command finishes (including after HTTP cancellation). There may be only
 one event per payment/source in a request. Request/event IDs are at most 128 UTF-8
 bytes; payment IDs at most 256. Existing API body, rate, concurrency and timeout
 limits also apply. Capacity exhaustion returns 422; full/unavailable GPU queues
@@ -122,8 +126,26 @@ existing behavior. GPU state uses its own namespace and **is not mirrored into
 the legacy `/v1/events` store**. Existing waiting deadlines, investigation history,
 webhooks and source-role credentials are not yet integrated into GPU endpoints.
 
-Recovery currently replays the complete journal; there is no snapshot checkpoint or
-retention policy. Disk loss is not process restart: maintain backups. Never delete
+Automatic checkpoints default to every 256 newly committed batches. Set
+`RECONCILE_GPU_CHECKPOINT_BATCHES` to 1..1,000,000 to change the interval. Publication
+blocks the actor briefly and contributes to request latency. An authenticated empty
+POST to `/v1/gpu/checkpoint` requests a checkpoint at the latest committed sequence;
+repeating it without intervening writes is a no-op. Empty state returns 422.
+
+The checkpoint is a compact little-endian copy of the GPU's slots, source values,
+versions and results, stored in the same SQLite database. Payload, boundary and
+identity manifest publish in one FULL transaction. A failed publication leaves the
+previous checkpoint intact and stops the worker. Corruption fails startup rather
+than silently discarding the checkpoint. Older journals without checkpoints still
+replay normally; no destructive migration or deletion is performed.
+
+The complete journal and identity index remain retained. Startup still scans their
+integrity; only GPU/JSON replay is limited to the tail. This is not constant-time
+recovery or a retention policy. Do not externally edit, delete, renumber or vacuum
+identity rows: checkpoint manifests bind their row order. Checksums detect accidental
+corruption, not an attacker able to rewrite the database and all its checksums.
+
+Disk loss is not process restart: maintain backups. Never delete
 SQLite WAL/SHM files while the service is running. For a simple offline copy, stop
 the service cleanly and retain the complete data directory. The GPU journal records
 payment evidence and needs filesystem access controls appropriate to that data.

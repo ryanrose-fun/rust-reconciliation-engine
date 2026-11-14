@@ -120,6 +120,11 @@ async fn durable_million_payment_benchmark() {
         .parse()
         .unwrap();
     assert!((1..=2_000_000).contains(&count));
+    let concurrency: usize = std::env::var("GPU_BENCH_CONCURRENCY")
+        .unwrap_or("1".into())
+        .parse()
+        .unwrap();
+    assert!((1..=8).contains(&concurrency));
     let root = std::env::temp_dir().join(format!("gpu-api-bench-{}", uuid::Uuid::new_v4()));
     std::fs::create_dir_all(&root).unwrap();
     println!("Evidence: {}", root.display());
@@ -136,31 +141,55 @@ async fn durable_million_payment_benchmark() {
     let mut preparation_s = 0.0;
     let mut validation_s = 0.0;
     let mut last = Vec::new();
-    for begin in (0..count).step_by(2048) {
-        let end = (begin + 2048).min(count);
-        let prep = Instant::now();
-        let body = batch(begin, end);
-        preparation_s += prep.elapsed().as_secs_f64();
-        payload_bytes += body.len();
-        last = body.clone();
-        let request_start = Instant::now();
-        let r = client
-            .post(format!("{}/v1/gpu/events", server.url))
-            .bearer_auth(KEY)
-            .header("content-type", "application/json")
-            .body(body)
-            .send()
-            .await
-            .unwrap();
-        let status = r.status();
-        let bytes = r.bytes().await.unwrap();
-        latency.push(request_start.elapsed().as_secs_f64() * 1000.0);
+    let mut last_sequence = 0;
+    let mut sequences = std::collections::HashSet::new();
+    let mut tasks = tokio::task::JoinSet::new();
+    let mut next = 0;
+    while next < count || !tasks.is_empty() {
+        while next < count && tasks.len() < concurrency {
+            let begin = next;
+            let end = (begin + 2048).min(count);
+            next = end;
+            let prep = Instant::now();
+            let body = batch(begin, end);
+            preparation_s += prep.elapsed().as_secs_f64();
+            payload_bytes += body.len();
+            last = body.clone();
+            let client = client.clone();
+            let url = format!("{}/v1/gpu/events", server.url);
+            tasks.spawn(async move {
+                let request_start = Instant::now();
+                let r = client
+                    .post(url)
+                    .bearer_auth(KEY)
+                    .header("content-type", "application/json")
+                    .body(body)
+                    .send()
+                    .await
+                    .unwrap();
+                let status = r.status();
+                let bytes = r.bytes().await.unwrap();
+                (
+                    begin,
+                    end,
+                    status,
+                    bytes,
+                    request_start.elapsed().as_secs_f64() * 1000.0,
+                )
+            });
+        }
+        let (begin, end, status, bytes, ms) = tasks.join_next().await.unwrap().unwrap();
+        latency.push(ms);
         response_bytes += bytes.len();
         assert_eq!(status, 200, "{}", String::from_utf8_lossy(&bytes));
         let validation = Instant::now();
         let reply: Value = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(reply["duplicate"], false);
-        assert_eq!(reply["commit_sequence"], latency.len());
+        let seq = reply["commit_sequence"].as_u64().unwrap();
+        assert!(sequences.insert(seq));
+        if end == count {
+            last_sequence = seq;
+        }
         let rows = reply["gpu"]["receipts"].as_array().unwrap();
         assert_eq!(rows.len(), end - begin);
         let mut seen = std::collections::HashSet::new();
@@ -182,13 +211,37 @@ async fn durable_million_payment_benchmark() {
         }
     }
     let ingestion_s = started.elapsed().as_secs_f64();
-    let disk_before = sizes(&root);
+    assert_eq!(sequences, (1..=latency.len() as u64).collect());
+    let disk_after_ingestion = sizes(&root);
     let end_health = get(&client, &server, "/v1/gpu/health").await;
     assert_eq!(end_health["committed_batches"], latency.len());
-    drop(server); // Force kill: do not rely on graceful shutdown/checkpoint.
+    // Publish a complete checkpoint, measured separately from ingestion. Automatic
+    // checkpoints during ingestion remain included in ingestion wall time/latency.
+    let cp_start = Instant::now();
+    let cp = client
+        .post(format!("{}/v1/gpu/checkpoint", server.url))
+        .bearer_auth(KEY)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(cp.status(), 200);
+    let _: Value = serde_json::from_slice(&cp.bytes().await.unwrap()).unwrap();
+    let checkpoint_s = cp_start.elapsed().as_secs_f64();
+    let repeat = client
+        .post(format!("{}/v1/gpu/checkpoint", server.url))
+        .bearer_auth(KEY)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(repeat.status(), 200);
+    let repeat: Value = serde_json::from_slice(&repeat.bytes().await.unwrap()).unwrap();
+    assert_eq!(repeat["checkpoint_sequence"], latency.len());
+    let disk_before = sizes(&root);
+    drop(server); // Force kill: do not rely on graceful shutdown.
     let (server, restart_to_ready_s) = start(&root, count);
     let recovered = get(&client, &server, "/v1/gpu/health").await;
     assert_eq!(recovered["committed_batches"], latency.len());
+    assert_eq!(recovered["checkpoint_sequence"], latency.len());
     let validation = Instant::now();
     let mut sampled = std::collections::BTreeSet::from([0, count - 1]);
     for i in (0..count).step_by((count / 1000).max(1)) {
@@ -219,7 +272,7 @@ async fn durable_million_payment_benchmark() {
     assert_eq!(retry.status(), 200);
     let retry: Value = serde_json::from_slice(&retry.bytes().await.unwrap()).unwrap();
     assert_eq!(retry["duplicate"], true);
-    assert_eq!(retry["commit_sequence"], latency.len());
+    assert_eq!(retry["commit_sequence"], last_sequence);
     let validation_after_restart_s = validation.elapsed().as_secs_f64();
     let disk_after = sizes(&root);
     drop(server);
@@ -249,6 +302,7 @@ async fn durable_million_payment_benchmark() {
         .collect();
     let mut phase_totals = serde_json::Map::new();
     for field in [
+        "preparation_ms",
         "identity_ms",
         "compute_ms",
         "journal_ms",
@@ -267,6 +321,17 @@ async fn durable_million_payment_benchmark() {
         profiles
             .iter()
             .filter(|p| p["phase"] == "apply")
+            .collect::<Vec<_>>()
+    );
+    report["concurrency"] = json!(concurrency);
+    report["disk_after_ingestion_bytes"] = disk_after_ingestion;
+    report["automatic_checkpoint_interval_batches"] = json!(256);
+    report["final_checkpoint_s"] = json!(checkpoint_s);
+    report["ingestion_plus_final_checkpoint_s"] = json!(ingestion_s + checkpoint_s);
+    report["checkpoint_profiles"] = json!(
+        profiles
+            .iter()
+            .filter(|p| p["phase"] == "checkpoint")
             .collect::<Vec<_>>()
     );
     std::fs::write(

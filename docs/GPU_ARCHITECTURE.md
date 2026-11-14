@@ -47,6 +47,23 @@ One actor thread owns the GPU worker and SQLite connection. Its queue bounds pen
 commands; HTTP limits bound request bytes and admission. GPU kernels remain massively
 parallel within each batch. The owner is not a single-core reconciliation algorithm.
 
+Request validation, canonical encoding and hashing run in bounded blocking preparation
+tasks, overlapping the owner's previous batch. A permit travels with each queued
+command until completion, so cancelling an HTTP waiter cannot evade the 32-request
+bound. The owner reuses prepared SQLite statements for identity lookup and insertion.
+GPU execution and commit remain ordered; this does not overlap speculative GPU state
+with an asynchronous storage writer. Source versions handle requests arriving out of
+order from concurrent clients.
+
+Checkpoints capture all occupied GPU slots at a committed sequence. A single SQLite
+FULL transaction publishes the binary payload, SHA-256, journal-prefix chain and
+identity-index manifest. Restart verifies these plus existing metadata and journal
+integrity, uploads the checkpoint and compares a full GPU readback before replaying
+the tail. The journal and identity index remain retained and scanned for integrity.
+Checkpoint creation pauses the actor and its cost is included in ingestion benchmarks;
+an explicit final checkpoint is separately timed. Failed publication leaves the old
+checkpoint usable after restart; corrupted checkpoints fail closed.
+
 Host-assigned dense slots map exact string IDs. A patch contains at most one update
 per source for a payment; one shader invocation owns that payment during a dispatch.
 Amounts and versions retain all 64 bits through pairs of u32 values. No monetary
@@ -65,8 +82,8 @@ CPU/GPU comparisons, including results where GPU was slower, to make performance
 claims auditable. The resident-worker results establish a useful incremental design;
 they do not establish durable API throughput.
 
-Next GPU work: measured durable API load and queue telemetry; replay checkpoints
-with verified watermarks; source-scoped credentials and tenant-isolated GPU slots;
+Next GPU work: finer latency telemetry; incremental checkpoint manifests and retention;
+source-scoped credentials and tenant-isolated GPU slots;
 integration of waiting/history policies; device-loss supervision; multi-GPU routing
 with explicit ownership and recovery. Each step needs correctness and latency
 evidence before increasing deployment claims.

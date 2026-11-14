@@ -1306,6 +1306,30 @@
         ]
       }
     },
+    "/v1/gpu/checkpoint": {
+      "post": {
+        "operationId": "checkpoint",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "GPU checkpoint atomically committed"
+          },
+          "503": {
+            "description": "Checkpoint failed; restart required"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": []
+      }
+    },
     "/v1/gpu/events": {
       "post": {
         "operationId": "ingest",

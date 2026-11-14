@@ -91,6 +91,66 @@ pub struct Worker<'a> {
     max_batch: usize,
 }
 impl<'a> Worker<'a> {
+    /// Stable little-endian checkpoint: IDs in slot order followed by the three
+    /// resident buffers. State is read from the GPU, not recomputed on the CPU.
+    pub fn checkpoint(&self) -> Vec<u8> {
+        let mut bytes = b"RGPUCP01".to_vec();
+        bytes.extend_from_slice(&(self.ids.len() as u32).to_le_bytes());
+        for id in &self.ids {
+            bytes.extend_from_slice(&(id.len() as u32).to_le_bytes());
+            bytes.extend_from_slice(id.as_bytes());
+        }
+        if self.ids.is_empty() {
+            return bytes;
+        }
+        let size = self.ids.len() * 52;
+        let staging = self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("checkpoint readback"),
+            size: size as u64,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let mut encoder = self.gpu.device.create_command_encoder(&Default::default());
+        let mut offset = 0;
+        for (i, stride) in [24, 24, 4].into_iter().enumerate() {
+            let len = (self.ids.len() * stride) as u64;
+            encoder.copy_buffer_to_buffer(&self.buffers[i], 0, &staging, offset, len);
+            offset += len;
+        }
+        self.gpu.queue.submit(Some(encoder.finish()));
+        for word in self.read(&staging, size) {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        bytes
+    }
+    /// Restore into a fresh worker only, validating the complete payload before
+    /// any GPU mutation. The caller verifies the persisted checksum and boundary.
+    pub fn restore(&mut self, bytes: &[u8]) -> Result<(), String> {
+        if !self.ids.is_empty() {
+            return Err("restore requires an empty worker".into());
+        }
+        let (ids, words) = decode_checkpoint(bytes, self.capacity)?;
+        let n = ids.len();
+        if n > 0 {
+            for (i, range) in [(0, 0..n * 6), (1, n * 6..n * 12), (2, n * 12..n * 13)] {
+                self.gpu.queue.write_buffer(
+                    &self.buffers[i],
+                    0,
+                    bytemuck::cast_slice(&words[range]),
+                );
+            }
+        }
+        self.dictionary = ids
+            .iter()
+            .enumerate()
+            .map(|(i, id)| (id.clone(), i as u32))
+            .collect();
+        self.ids = ids;
+        if self.checkpoint() != bytes {
+            return Err("GPU checkpoint readback mismatch".into());
+        }
+        Ok(())
+    }
     pub fn snapshot(&self, id: &str) -> Option<Snapshot> {
         let slot = *self.dictionary.get(id)? as u64;
         let buffer = self.gpu.device.create_buffer(&wgpu::BufferDescriptor {
@@ -386,6 +446,65 @@ impl<'a> Worker<'a> {
         })
     }
 }
+
+fn decode_checkpoint(bytes: &[u8], capacity: usize) -> Result<(Vec<String>, Vec<u32>), String> {
+    let mut rest = bytes;
+    fn take<'a>(rest: &mut &'a [u8], n: usize) -> Result<&'a [u8], String> {
+        if rest.len() < n {
+            return Err("truncated GPU checkpoint".into());
+        }
+        let (a, b) = rest.split_at(n);
+        *rest = b;
+        Ok(a)
+    }
+    fn word(rest: &mut &[u8]) -> Result<usize, String> {
+        Ok(u32::from_le_bytes(take(rest, 4)?.try_into().unwrap()) as usize)
+    }
+    if take(&mut rest, 8)? != b"RGPUCP01" {
+        return Err("invalid GPU checkpoint format".into());
+    }
+    let n = word(&mut rest)?;
+    if n > capacity {
+        return Err("GPU checkpoint exceeds capacity".into());
+    }
+    let mut ids = Vec::with_capacity(n);
+    let mut seen = std::collections::HashSet::new();
+    for _ in 0..n {
+        let len = word(&mut rest)?;
+        if len == 0 || len > 256 {
+            return Err("invalid checkpoint ID length".into());
+        }
+        let id = std::str::from_utf8(take(&mut rest, len)?)
+            .map_err(|_| "invalid checkpoint ID")?
+            .to_owned();
+        if id.trim().is_empty() || !seen.insert(id.clone()) {
+            return Err("duplicate/blank checkpoint ID".into());
+        }
+        ids.push(id);
+    }
+    if rest.len() != n * 52 {
+        return Err("invalid checkpoint state length".into());
+    }
+    let words: Vec<u32> = rest
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|b| u32::from_le_bytes(*b))
+        .collect();
+    for value in words[..n * 12].as_chunks::<6>().0 {
+        if value[4] > 3 || value[5] > 2 {
+            return Err("invalid checkpoint currency/status".into());
+        }
+    }
+    if words[n * 12..]
+        .iter()
+        .any(|r| !matches!(r, 0 | 1 | 3 | 5 | 7 | 9 | 11 | 13 | 15 | 16 | 32))
+    {
+        return Err("invalid checkpoint result".into());
+    }
+    Ok((ids, words))
+}
+
 fn event(id: &str, source: u32, version: u64, amount: u64, status: u32) -> Event {
     Event {
         id: id.into(),
@@ -621,4 +740,21 @@ pub fn run(n: usize, path: &str) {
         "source_sha256":format!("{:x}",Sha256::digest(include_bytes!("resident.rs"))),"shader_sha256":format!("{:x}",Sha256::digest(include_bytes!("resident.wgsl")))});
     std::fs::write(path, serde_json::to_vec_pretty(&report).unwrap()).unwrap();
     println!("Saved {path}");
+}
+
+#[cfg(test)]
+mod checkpoint_tests {
+    use super::*;
+    #[test]
+    fn rejects_malformed_checkpoint_before_gpu_use() {
+        assert!(decode_checkpoint(b"RGPUCP01\0\0\0\0", 1).is_ok());
+        for b in [b"".as_slice(), b"RGPUCP01\x02\0\0\0", b"RGPUCP01\0\0\0\0x"] {
+            assert!(decode_checkpoint(b, 1).is_err());
+        }
+        let mut b = b"RGPUCP01\x01\0\0\0\x01\0\0\0p".to_vec();
+        b.extend_from_slice(&[0; 52]);
+        assert!(decode_checkpoint(&b, 1).is_ok());
+        *b.last_mut().unwrap() = 255;
+        assert!(decode_checkpoint(&b, 1).is_err());
+    }
 }
