@@ -1,0 +1,1997 @@
+{
+  "all_durable_s": 306.487691,
+  "ambiguous_retry_confirmed": true,
+  "base_payments_per_source_per_s": 5000,
+  "broker": "Apache Kafka 4.0.1, one local broker, replication factor 1",
+  "burst_duration_s": 10,
+  "burst_payments_per_source_per_s": 25000,
+  "burst_start_s": 60,
+  "configured_seconds": 180,
+  "delivered_events_including_duplicates": 3410000,
+  "durability": "GPU journal and consumer cursor SQLite WAL synchronous FULL; pending retained before HTTP; cursor advances after durable ACK",
+  "effective_unique_events_per_s": 10767.153451523116,
+  "end_to_end_record_latency_ms": {
+    "max": 126655.0,
+    "p50": 45795.0,
+    "p95": 122961.0,
+    "p99": 126128.0
+  },
+  "kafka_records": 6820,
+  "payments": 1100000,
+  "post_producer_drain_s": 126.57847509999999,
+  "producer_acknowledged_records": 6820,
+  "producer_summaries": [
+    {
+      "elapsed_s": 179.9082396,
+      "events": 1100000,
+      "kind": "producer_done",
+      "payments": 1100000,
+      "records": 2200,
+      "source": "Internal"
+    },
+    {
+      "elapsed_s": 179.9092159,
+      "events": 2310000,
+      "kind": "producer_done",
+      "payments": 1100000,
+      "records": 4620,
+      "source": "Provider"
+    }
+  ],
+  "producers_finished_s": 179.9092159,
+  "restart_to_ready_s": 4.0580845,
+  "snapshot_checks": 2001,
+  "started_at_ms": 1794670446462,
+  "startup_profiles": [
+    {
+      "batches": 0,
+      "checkpoint_sequence": 0,
+      "initialized_ms": 454.4633,
+      "phase": "startup",
+      "replay_compute_ms": 0.0,
+      "replayed_batches": 0,
+      "total_ms": 454.5556
+    },
+    {
+      "batches": 2138,
+      "checkpoint_sequence": 2048,
+      "initialized_ms": 2295.899,
+      "phase": "startup",
+      "replay_compute_ms": 46.110099999999974,
+      "replayed_batches": 90,
+      "total_ms": 2804.7258
+    },
+    {
+      "batches": 6820,
+      "checkpoint_sequence": 6656,
+      "initialized_ms": 16320.5531,
+      "phase": "startup",
+      "replay_compute_ms": 214.22229999999996,
+      "replayed_batches": 164,
+      "total_ms": 20283.5336
+    }
+  ],
+  "stop_at_s": 71.2022062,
+  "timeline": [
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 3,
+      "record_latency_p95_ms": 182.0,
+      "records": 30,
+      "second": 0
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 153.0,
+      "records": 30,
+      "second": 1
+    },
+    {
+      "events": 16500,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 138.0,
+      "records": 33,
+      "second": 2
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 3,
+      "record_latency_p95_ms": 155.0,
+      "records": 31,
+      "second": 3
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 158.0,
+      "records": 30,
+      "second": 4
+    },
+    {
+      "events": 14500,
+      "max_fetch_lag_records": 3,
+      "record_latency_p95_ms": 220.0,
+      "records": 29,
+      "second": 5
+    },
+    {
+      "events": 16500,
+      "max_fetch_lag_records": 4,
+      "record_latency_p95_ms": 186.0,
+      "records": 33,
+      "second": 6
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 3,
+      "record_latency_p95_ms": 159.0,
+      "records": 30,
+      "second": 7
+    },
+    {
+      "events": 11000,
+      "max_fetch_lag_records": 8,
+      "record_latency_p95_ms": 473.0,
+      "records": 22,
+      "second": 8
+    },
+    {
+      "events": 11000,
+      "max_fetch_lag_records": 15,
+      "record_latency_p95_ms": 843.0,
+      "records": 22,
+      "second": 9
+    },
+    {
+      "events": 17000,
+      "max_fetch_lag_records": 22,
+      "record_latency_p95_ms": 1080.0,
+      "records": 34,
+      "second": 10
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 19,
+      "record_latency_p95_ms": 952.0,
+      "records": 30,
+      "second": 11
+    },
+    {
+      "events": 13000,
+      "max_fetch_lag_records": 20,
+      "record_latency_p95_ms": 990.0,
+      "records": 26,
+      "second": 12
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 25,
+      "record_latency_p95_ms": 1216.0,
+      "records": 30,
+      "second": 13
+    },
+    {
+      "events": 13000,
+      "max_fetch_lag_records": 26,
+      "record_latency_p95_ms": 1319.0,
+      "records": 26,
+      "second": 14
+    },
+    {
+      "events": 12000,
+      "max_fetch_lag_records": 35,
+      "record_latency_p95_ms": 1674.0,
+      "records": 24,
+      "second": 15
+    },
+    {
+      "events": 14500,
+      "max_fetch_lag_records": 40,
+      "record_latency_p95_ms": 1957.0,
+      "records": 29,
+      "second": 16
+    },
+    {
+      "events": 18000,
+      "max_fetch_lag_records": 39,
+      "record_latency_p95_ms": 1841.0,
+      "records": 36,
+      "second": 17
+    },
+    {
+      "events": 13500,
+      "max_fetch_lag_records": 34,
+      "record_latency_p95_ms": 1727.0,
+      "records": 27,
+      "second": 18
+    },
+    {
+      "events": 12500,
+      "max_fetch_lag_records": 41,
+      "record_latency_p95_ms": 1996.0,
+      "records": 25,
+      "second": 19
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 44,
+      "record_latency_p95_ms": 2181.0,
+      "records": 30,
+      "second": 20
+    },
+    {
+      "events": 17500,
+      "max_fetch_lag_records": 43,
+      "record_latency_p95_ms": 2108.0,
+      "records": 35,
+      "second": 21
+    },
+    {
+      "events": 12000,
+      "max_fetch_lag_records": 44,
+      "record_latency_p95_ms": 2187.0,
+      "records": 24,
+      "second": 22
+    },
+    {
+      "events": 17000,
+      "max_fetch_lag_records": 47,
+      "record_latency_p95_ms": 2262.0,
+      "records": 34,
+      "second": 23
+    },
+    {
+      "events": 17000,
+      "max_fetch_lag_records": 43,
+      "record_latency_p95_ms": 2108.0,
+      "records": 34,
+      "second": 24
+    },
+    {
+      "events": 20000,
+      "max_fetch_lag_records": 39,
+      "record_latency_p95_ms": 1935.0,
+      "records": 40,
+      "second": 25
+    },
+    {
+      "events": 14000,
+      "max_fetch_lag_records": 36,
+      "record_latency_p95_ms": 1745.0,
+      "records": 28,
+      "second": 26
+    },
+    {
+      "events": 19000,
+      "max_fetch_lag_records": 35,
+      "record_latency_p95_ms": 1717.0,
+      "records": 38,
+      "second": 27
+    },
+    {
+      "events": 21500,
+      "max_fetch_lag_records": 28,
+      "record_latency_p95_ms": 1315.0,
+      "records": 43,
+      "second": 28
+    },
+    {
+      "events": 13000,
+      "max_fetch_lag_records": 19,
+      "record_latency_p95_ms": 973.0,
+      "records": 26,
+      "second": 29
+    },
+    {
+      "events": 17500,
+      "max_fetch_lag_records": 22,
+      "record_latency_p95_ms": 1124.0,
+      "records": 35,
+      "second": 30
+    },
+    {
+      "events": 16000,
+      "max_fetch_lag_records": 17,
+      "record_latency_p95_ms": 867.0,
+      "records": 32,
+      "second": 31
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 18,
+      "record_latency_p95_ms": 892.0,
+      "records": 30,
+      "second": 32
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 19,
+      "record_latency_p95_ms": 915.0,
+      "records": 30,
+      "second": 33
+    },
+    {
+      "events": 13500,
+      "max_fetch_lag_records": 22,
+      "record_latency_p95_ms": 1077.0,
+      "records": 27,
+      "second": 34
+    },
+    {
+      "events": 14500,
+      "max_fetch_lag_records": 23,
+      "record_latency_p95_ms": 1165.0,
+      "records": 29,
+      "second": 35
+    },
+    {
+      "events": 17500,
+      "max_fetch_lag_records": 24,
+      "record_latency_p95_ms": 1146.0,
+      "records": 35,
+      "second": 36
+    },
+    {
+      "events": 19500,
+      "max_fetch_lag_records": 19,
+      "record_latency_p95_ms": 982.0,
+      "records": 39,
+      "second": 37
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 14,
+      "record_latency_p95_ms": 741.0,
+      "records": 31,
+      "second": 38
+    },
+    {
+      "events": 13000,
+      "max_fetch_lag_records": 15,
+      "record_latency_p95_ms": 738.0,
+      "records": 26,
+      "second": 39
+    },
+    {
+      "events": 12000,
+      "max_fetch_lag_records": 22,
+      "record_latency_p95_ms": 1099.0,
+      "records": 24,
+      "second": 40
+    },
+    {
+      "events": 14000,
+      "max_fetch_lag_records": 27,
+      "record_latency_p95_ms": 1351.0,
+      "records": 28,
+      "second": 41
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 28,
+      "record_latency_p95_ms": 1361.0,
+      "records": 30,
+      "second": 42
+    },
+    {
+      "events": 19000,
+      "max_fetch_lag_records": 29,
+      "record_latency_p95_ms": 1391.0,
+      "records": 38,
+      "second": 43
+    },
+    {
+      "events": 22000,
+      "max_fetch_lag_records": 22,
+      "record_latency_p95_ms": 1005.0,
+      "records": 44,
+      "second": 44
+    },
+    {
+      "events": 19500,
+      "max_fetch_lag_records": 7,
+      "record_latency_p95_ms": 412.0,
+      "records": 39,
+      "second": 45
+    },
+    {
+      "events": 14000,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 156.0,
+      "records": 28,
+      "second": 46
+    },
+    {
+      "events": 17000,
+      "max_fetch_lag_records": 4,
+      "record_latency_p95_ms": 184.0,
+      "records": 34,
+      "second": 47
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 86.0,
+      "records": 31,
+      "second": 48
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 75.0,
+      "records": 31,
+      "second": 49
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 124.0,
+      "records": 30,
+      "second": 50
+    },
+    {
+      "events": 16000,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 106.0,
+      "records": 32,
+      "second": 51
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 89.0,
+      "records": 31,
+      "second": 52
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 2,
+      "record_latency_p95_ms": 94.0,
+      "records": 30,
+      "second": 53
+    },
+    {
+      "events": 12500,
+      "max_fetch_lag_records": 3,
+      "record_latency_p95_ms": 268.0,
+      "records": 25,
+      "second": 54
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 8,
+      "record_latency_p95_ms": 437.0,
+      "records": 31,
+      "second": 55
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 9,
+      "record_latency_p95_ms": 417.0,
+      "records": 30,
+      "second": 56
+    },
+    {
+      "events": 14000,
+      "max_fetch_lag_records": 10,
+      "record_latency_p95_ms": 551.0,
+      "records": 28,
+      "second": 57
+    },
+    {
+      "events": 12000,
+      "max_fetch_lag_records": 17,
+      "record_latency_p95_ms": 818.0,
+      "records": 24,
+      "second": 58
+    },
+    {
+      "events": 12500,
+      "max_fetch_lag_records": 20,
+      "record_latency_p95_ms": 1066.0,
+      "records": 25,
+      "second": 59
+    },
+    {
+      "events": 16000,
+      "max_fetch_lag_records": 85,
+      "record_latency_p95_ms": 1289.0,
+      "records": 32,
+      "second": 60
+    },
+    {
+      "events": 15608,
+      "max_fetch_lag_records": 184,
+      "record_latency_p95_ms": 1825.0,
+      "records": 31,
+      "second": 61
+    },
+    {
+      "events": 13524,
+      "max_fetch_lag_records": 291,
+      "record_latency_p95_ms": 2643.0,
+      "records": 27,
+      "second": 62
+    },
+    {
+      "events": 10964,
+      "max_fetch_lag_records": 360,
+      "record_latency_p95_ms": 3562.0,
+      "records": 22,
+      "second": 63
+    },
+    {
+      "events": 11928,
+      "max_fetch_lag_records": 453,
+      "record_latency_p95_ms": 4356.0,
+      "records": 24,
+      "second": 64
+    },
+    {
+      "events": 12048,
+      "max_fetch_lag_records": 546,
+      "record_latency_p95_ms": 5374.0,
+      "records": 24,
+      "second": 65
+    },
+    {
+      "events": 14548,
+      "max_fetch_lag_records": 655,
+      "record_latency_p95_ms": 6315.0,
+      "records": 29,
+      "second": 66
+    },
+    {
+      "events": 11928,
+      "max_fetch_lag_records": 738,
+      "record_latency_p95_ms": 7213.0,
+      "records": 24,
+      "second": 67
+    },
+    {
+      "events": 16024,
+      "max_fetch_lag_records": 837,
+      "record_latency_p95_ms": 7986.0,
+      "records": 32,
+      "second": 68
+    },
+    {
+      "events": 14036,
+      "max_fetch_lag_records": 920,
+      "record_latency_p95_ms": 8821.0,
+      "records": 28,
+      "second": 69
+    },
+    {
+      "events": 13976,
+      "max_fetch_lag_records": 943,
+      "record_latency_p95_ms": 9816.0,
+      "records": 28,
+      "second": 70
+    },
+    {
+      "events": 1476,
+      "max_fetch_lag_records": 700,
+      "record_latency_p95_ms": 42027.0,
+      "records": 3,
+      "second": 104
+    },
+    {
+      "events": 27048,
+      "max_fetch_lag_records": 1658,
+      "record_latency_p95_ms": 44519.0,
+      "records": 54,
+      "second": 105
+    },
+    {
+      "events": 29488,
+      "max_fetch_lag_records": 1651,
+      "record_latency_p95_ms": 45225.0,
+      "records": 59,
+      "second": 106
+    },
+    {
+      "events": 27440,
+      "max_fetch_lag_records": 1644,
+      "record_latency_p95_ms": 45948.0,
+      "records": 55,
+      "second": 107
+    },
+    {
+      "events": 29036,
+      "max_fetch_lag_records": 1637,
+      "record_latency_p95_ms": 46711.0,
+      "records": 58,
+      "second": 108
+    },
+    {
+      "events": 20512,
+      "max_fetch_lag_records": 1628,
+      "record_latency_p95_ms": 47393.0,
+      "records": 41,
+      "second": 109
+    },
+    {
+      "events": 20512,
+      "max_fetch_lag_records": 1629,
+      "record_latency_p95_ms": 48250.0,
+      "records": 41,
+      "second": 110
+    },
+    {
+      "events": 22440,
+      "max_fetch_lag_records": 1632,
+      "record_latency_p95_ms": 49116.0,
+      "records": 45,
+      "second": 111
+    },
+    {
+      "events": 29036,
+      "max_fetch_lag_records": 1629,
+      "record_latency_p95_ms": 49828.0,
+      "records": 58,
+      "second": 112
+    },
+    {
+      "events": 28464,
+      "max_fetch_lag_records": 1618,
+      "record_latency_p95_ms": 50525.0,
+      "records": 57,
+      "second": 113
+    },
+    {
+      "events": 22048,
+      "max_fetch_lag_records": 1613,
+      "record_latency_p95_ms": 51325.0,
+      "records": 44,
+      "second": 114
+    },
+    {
+      "events": 20512,
+      "max_fetch_lag_records": 1612,
+      "record_latency_p95_ms": 52028.0,
+      "records": 41,
+      "second": 115
+    },
+    {
+      "events": 21024,
+      "max_fetch_lag_records": 1613,
+      "record_latency_p95_ms": 52866.0,
+      "records": 42,
+      "second": 116
+    },
+    {
+      "events": 29428,
+      "max_fetch_lag_records": 1612,
+      "record_latency_p95_ms": 53684.0,
+      "records": 59,
+      "second": 117
+    },
+    {
+      "events": 30464,
+      "max_fetch_lag_records": 1603,
+      "record_latency_p95_ms": 54202.0,
+      "records": 61,
+      "second": 118
+    },
+    {
+      "events": 16072,
+      "max_fetch_lag_records": 1598,
+      "record_latency_p95_ms": 55038.0,
+      "records": 32,
+      "second": 119
+    },
+    {
+      "events": 11964,
+      "max_fetch_lag_records": 1607,
+      "record_latency_p95_ms": 55916.0,
+      "records": 24,
+      "second": 120
+    },
+    {
+      "events": 14000,
+      "max_fetch_lag_records": 1612,
+      "record_latency_p95_ms": 56889.0,
+      "records": 28,
+      "second": 121
+    },
+    {
+      "events": 11964,
+      "max_fetch_lag_records": 1621,
+      "record_latency_p95_ms": 57861.0,
+      "records": 24,
+      "second": 122
+    },
+    {
+      "events": 15060,
+      "max_fetch_lag_records": 1628,
+      "record_latency_p95_ms": 58691.0,
+      "records": 30,
+      "second": 123
+    },
+    {
+      "events": 12024,
+      "max_fetch_lag_records": 1635,
+      "record_latency_p95_ms": 59631.0,
+      "records": 24,
+      "second": 124
+    },
+    {
+      "events": 17464,
+      "max_fetch_lag_records": 1642,
+      "record_latency_p95_ms": 60411.0,
+      "records": 35,
+      "second": 125
+    },
+    {
+      "events": 13024,
+      "max_fetch_lag_records": 1645,
+      "record_latency_p95_ms": 61129.0,
+      "records": 26,
+      "second": 126
+    },
+    {
+      "events": 13952,
+      "max_fetch_lag_records": 1656,
+      "record_latency_p95_ms": 62126.0,
+      "records": 28,
+      "second": 127
+    },
+    {
+      "events": 13524,
+      "max_fetch_lag_records": 1663,
+      "record_latency_p95_ms": 62912.0,
+      "records": 27,
+      "second": 128
+    },
+    {
+      "events": 8988,
+      "max_fetch_lag_records": 1676,
+      "record_latency_p95_ms": 63978.0,
+      "records": 18,
+      "second": 129
+    },
+    {
+      "events": 17548,
+      "max_fetch_lag_records": 1679,
+      "record_latency_p95_ms": 64856.0,
+      "records": 35,
+      "second": 130
+    },
+    {
+      "events": 13404,
+      "max_fetch_lag_records": 1682,
+      "record_latency_p95_ms": 65474.0,
+      "records": 27,
+      "second": 131
+    },
+    {
+      "events": 17596,
+      "max_fetch_lag_records": 1691,
+      "record_latency_p95_ms": 66531.0,
+      "records": 35,
+      "second": 132
+    },
+    {
+      "events": 20000,
+      "max_fetch_lag_records": 1692,
+      "record_latency_p95_ms": 67243.0,
+      "records": 40,
+      "second": 133
+    },
+    {
+      "events": 17976,
+      "max_fetch_lag_records": 1695,
+      "record_latency_p95_ms": 68116.0,
+      "records": 36,
+      "second": 134
+    },
+    {
+      "events": 14440,
+      "max_fetch_lag_records": 1700,
+      "record_latency_p95_ms": 68992.0,
+      "records": 29,
+      "second": 135
+    },
+    {
+      "events": 12536,
+      "max_fetch_lag_records": 1709,
+      "record_latency_p95_ms": 69908.0,
+      "records": 25,
+      "second": 136
+    },
+    {
+      "events": 9536,
+      "max_fetch_lag_records": 1712,
+      "record_latency_p95_ms": 70472.0,
+      "records": 19,
+      "second": 137
+    },
+    {
+      "events": 12916,
+      "max_fetch_lag_records": 1729,
+      "record_latency_p95_ms": 71625.0,
+      "records": 26,
+      "second": 138
+    },
+    {
+      "events": 19548,
+      "max_fetch_lag_records": 1730,
+      "record_latency_p95_ms": 72428.0,
+      "records": 39,
+      "second": 139
+    },
+    {
+      "events": 19000,
+      "max_fetch_lag_records": 1733,
+      "record_latency_p95_ms": 73230.0,
+      "records": 38,
+      "second": 140
+    },
+    {
+      "events": 20500,
+      "max_fetch_lag_records": 1734,
+      "record_latency_p95_ms": 73919.0,
+      "records": 41,
+      "second": 141
+    },
+    {
+      "events": 11964,
+      "max_fetch_lag_records": 1739,
+      "record_latency_p95_ms": 74878.0,
+      "records": 24,
+      "second": 142
+    },
+    {
+      "events": 11584,
+      "max_fetch_lag_records": 1748,
+      "record_latency_p95_ms": 75795.0,
+      "records": 23,
+      "second": 143
+    },
+    {
+      "events": 13928,
+      "max_fetch_lag_records": 1757,
+      "record_latency_p95_ms": 76730.0,
+      "records": 28,
+      "second": 144
+    },
+    {
+      "events": 11512,
+      "max_fetch_lag_records": 1768,
+      "record_latency_p95_ms": 77507.0,
+      "records": 23,
+      "second": 145
+    },
+    {
+      "events": 10512,
+      "max_fetch_lag_records": 1773,
+      "record_latency_p95_ms": 78234.0,
+      "records": 21,
+      "second": 146
+    },
+    {
+      "events": 14952,
+      "max_fetch_lag_records": 1784,
+      "record_latency_p95_ms": 79425.0,
+      "records": 30,
+      "second": 147
+    },
+    {
+      "events": 17572,
+      "max_fetch_lag_records": 1789,
+      "record_latency_p95_ms": 80172.0,
+      "records": 35,
+      "second": 148
+    },
+    {
+      "events": 21524,
+      "max_fetch_lag_records": 1788,
+      "record_latency_p95_ms": 80911.0,
+      "records": 43,
+      "second": 149
+    },
+    {
+      "events": 15048,
+      "max_fetch_lag_records": 1791,
+      "record_latency_p95_ms": 81872.0,
+      "records": 30,
+      "second": 150
+    },
+    {
+      "events": 10404,
+      "max_fetch_lag_records": 1800,
+      "record_latency_p95_ms": 82687.0,
+      "records": 21,
+      "second": 151
+    },
+    {
+      "events": 11464,
+      "max_fetch_lag_records": 1811,
+      "record_latency_p95_ms": 83657.0,
+      "records": 23,
+      "second": 152
+    },
+    {
+      "events": 14536,
+      "max_fetch_lag_records": 1820,
+      "record_latency_p95_ms": 84399.0,
+      "records": 29,
+      "second": 153
+    },
+    {
+      "events": 12536,
+      "max_fetch_lag_records": 1827,
+      "record_latency_p95_ms": 85410.0,
+      "records": 25,
+      "second": 154
+    },
+    {
+      "events": 12928,
+      "max_fetch_lag_records": 1836,
+      "record_latency_p95_ms": 86264.0,
+      "records": 26,
+      "second": 155
+    },
+    {
+      "events": 11000,
+      "max_fetch_lag_records": 1847,
+      "record_latency_p95_ms": 87192.0,
+      "records": 22,
+      "second": 156
+    },
+    {
+      "events": 14548,
+      "max_fetch_lag_records": 1852,
+      "record_latency_p95_ms": 87910.0,
+      "records": 29,
+      "second": 157
+    },
+    {
+      "events": 12440,
+      "max_fetch_lag_records": 1861,
+      "record_latency_p95_ms": 88656.0,
+      "records": 25,
+      "second": 158
+    },
+    {
+      "events": 13000,
+      "max_fetch_lag_records": 1868,
+      "record_latency_p95_ms": 89029.0,
+      "records": 26,
+      "second": 159
+    },
+    {
+      "events": 14500,
+      "max_fetch_lag_records": 1873,
+      "record_latency_p95_ms": 89313.0,
+      "records": 29,
+      "second": 160
+    },
+    {
+      "events": 18500,
+      "max_fetch_lag_records": 1878,
+      "record_latency_p95_ms": 89505.0,
+      "records": 37,
+      "second": 161
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 1887,
+      "record_latency_p95_ms": 89914.0,
+      "records": 20,
+      "second": 162
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 1896,
+      "record_latency_p95_ms": 90280.0,
+      "records": 30,
+      "second": 163
+    },
+    {
+      "events": 17000,
+      "max_fetch_lag_records": 1899,
+      "record_latency_p95_ms": 90489.0,
+      "records": 34,
+      "second": 164
+    },
+    {
+      "events": 12000,
+      "max_fetch_lag_records": 1906,
+      "record_latency_p95_ms": 90860.0,
+      "records": 24,
+      "second": 165
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 1913,
+      "record_latency_p95_ms": 91116.0,
+      "records": 31,
+      "second": 166
+    },
+    {
+      "events": 11500,
+      "max_fetch_lag_records": 1922,
+      "record_latency_p95_ms": 91586.0,
+      "records": 23,
+      "second": 167
+    },
+    {
+      "events": 12500,
+      "max_fetch_lag_records": 1929,
+      "record_latency_p95_ms": 91930.0,
+      "records": 25,
+      "second": 168
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 1936,
+      "record_latency_p95_ms": 92272.0,
+      "records": 31,
+      "second": 169
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 1947,
+      "record_latency_p95_ms": 92821.0,
+      "records": 20,
+      "second": 170
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 1954,
+      "record_latency_p95_ms": 93179.0,
+      "records": 20,
+      "second": 171
+    },
+    {
+      "events": 13000,
+      "max_fetch_lag_records": 1967,
+      "record_latency_p95_ms": 93737.0,
+      "records": 26,
+      "second": 172
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 1972,
+      "record_latency_p95_ms": 93946.0,
+      "records": 31,
+      "second": 173
+    },
+    {
+      "events": 17500,
+      "max_fetch_lag_records": 1977,
+      "record_latency_p95_ms": 94149.0,
+      "records": 35,
+      "second": 174
+    },
+    {
+      "events": 12500,
+      "max_fetch_lag_records": 1984,
+      "record_latency_p95_ms": 94572.0,
+      "records": 25,
+      "second": 175
+    },
+    {
+      "events": 16000,
+      "max_fetch_lag_records": 1991,
+      "record_latency_p95_ms": 94838.0,
+      "records": 32,
+      "second": 176
+    },
+    {
+      "events": 21000,
+      "max_fetch_lag_records": 1992,
+      "record_latency_p95_ms": 94848.0,
+      "records": 42,
+      "second": 177
+    },
+    {
+      "events": 22500,
+      "max_fetch_lag_records": 1991,
+      "record_latency_p95_ms": 94819.0,
+      "records": 45,
+      "second": 178
+    },
+    {
+      "events": 23500,
+      "max_fetch_lag_records": 1988,
+      "record_latency_p95_ms": 94713.0,
+      "records": 47,
+      "second": 179
+    },
+    {
+      "events": 16500,
+      "max_fetch_lag_records": 1985,
+      "record_latency_p95_ms": 94834.0,
+      "records": 33,
+      "second": 180
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 1968,
+      "record_latency_p95_ms": 95044.0,
+      "records": 31,
+      "second": 181
+    },
+    {
+      "events": 10500,
+      "max_fetch_lag_records": 1953,
+      "record_latency_p95_ms": 95572.0,
+      "records": 21,
+      "second": 182
+    },
+    {
+      "events": 11000,
+      "max_fetch_lag_records": 1942,
+      "record_latency_p95_ms": 96038.0,
+      "records": 22,
+      "second": 183
+    },
+    {
+      "events": 15500,
+      "max_fetch_lag_records": 1930,
+      "record_latency_p95_ms": 96293.0,
+      "records": 31,
+      "second": 184
+    },
+    {
+      "events": 11500,
+      "max_fetch_lag_records": 1915,
+      "record_latency_p95_ms": 96786.0,
+      "records": 23,
+      "second": 185
+    },
+    {
+      "events": 17000,
+      "max_fetch_lag_records": 1904,
+      "record_latency_p95_ms": 97021.0,
+      "records": 34,
+      "second": 186
+    },
+    {
+      "events": 18500,
+      "max_fetch_lag_records": 1886,
+      "record_latency_p95_ms": 97055.0,
+      "records": 37,
+      "second": 187
+    },
+    {
+      "events": 11500,
+      "max_fetch_lag_records": 1869,
+      "record_latency_p95_ms": 97486.0,
+      "records": 23,
+      "second": 188
+    },
+    {
+      "events": 15000,
+      "max_fetch_lag_records": 1858,
+      "record_latency_p95_ms": 97826.0,
+      "records": 30,
+      "second": 189
+    },
+    {
+      "events": 14000,
+      "max_fetch_lag_records": 1842,
+      "record_latency_p95_ms": 98145.0,
+      "records": 28,
+      "second": 190
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 1828,
+      "record_latency_p95_ms": 98397.0,
+      "records": 19,
+      "second": 191
+    },
+    {
+      "events": 13500,
+      "max_fetch_lag_records": 1818,
+      "record_latency_p95_ms": 98982.0,
+      "records": 27,
+      "second": 192
+    },
+    {
+      "events": 12000,
+      "max_fetch_lag_records": 1806,
+      "record_latency_p95_ms": 99402.0,
+      "records": 24,
+      "second": 193
+    },
+    {
+      "events": 10500,
+      "max_fetch_lag_records": 1794,
+      "record_latency_p95_ms": 99930.0,
+      "records": 21,
+      "second": 194
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1782,
+      "record_latency_p95_ms": 100363.0,
+      "records": 15,
+      "second": 195
+    },
+    {
+      "events": 5500,
+      "max_fetch_lag_records": 1769,
+      "record_latency_p95_ms": 100750.0,
+      "records": 11,
+      "second": 196
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1758,
+      "record_latency_p95_ms": 101048.0,
+      "records": 16,
+      "second": 197
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1742,
+      "record_latency_p95_ms": 101244.0,
+      "records": 16,
+      "second": 198
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1726,
+      "record_latency_p95_ms": 101491.0,
+      "records": 17,
+      "second": 199
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1709,
+      "record_latency_p95_ms": 101798.0,
+      "records": 15,
+      "second": 200
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1694,
+      "record_latency_p95_ms": 101974.0,
+      "records": 16,
+      "second": 201
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1678,
+      "record_latency_p95_ms": 102301.0,
+      "records": 15,
+      "second": 202
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 1663,
+      "record_latency_p95_ms": 102658.0,
+      "records": 13,
+      "second": 203
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1650,
+      "record_latency_p95_ms": 102870.0,
+      "records": 16,
+      "second": 204
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 1634,
+      "record_latency_p95_ms": 103275.0,
+      "records": 13,
+      "second": 205
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1621,
+      "record_latency_p95_ms": 103559.0,
+      "records": 15,
+      "second": 206
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1606,
+      "record_latency_p95_ms": 103907.0,
+      "records": 15,
+      "second": 207
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1591,
+      "record_latency_p95_ms": 104167.0,
+      "records": 16,
+      "second": 208
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1575,
+      "record_latency_p95_ms": 104387.0,
+      "records": 17,
+      "second": 209
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1558,
+      "record_latency_p95_ms": 104511.0,
+      "records": 17,
+      "second": 210
+    },
+    {
+      "events": 10500,
+      "max_fetch_lag_records": 1541,
+      "record_latency_p95_ms": 104570.0,
+      "records": 21,
+      "second": 211
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 1520,
+      "record_latency_p95_ms": 104645.0,
+      "records": 18,
+      "second": 212
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1502,
+      "record_latency_p95_ms": 104970.0,
+      "records": 15,
+      "second": 213
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1487,
+      "record_latency_p95_ms": 105055.0,
+      "records": 17,
+      "second": 214
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1470,
+      "record_latency_p95_ms": 105346.0,
+      "records": 16,
+      "second": 215
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1454,
+      "record_latency_p95_ms": 105639.0,
+      "records": 16,
+      "second": 216
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1438,
+      "record_latency_p95_ms": 105885.0,
+      "records": 16,
+      "second": 217
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1422,
+      "record_latency_p95_ms": 105995.0,
+      "records": 17,
+      "second": 218
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1405,
+      "record_latency_p95_ms": 106260.0,
+      "records": 17,
+      "second": 219
+    },
+    {
+      "events": 7000,
+      "max_fetch_lag_records": 1388,
+      "record_latency_p95_ms": 106568.0,
+      "records": 14,
+      "second": 220
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1374,
+      "record_latency_p95_ms": 106814.0,
+      "records": 16,
+      "second": 221
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1358,
+      "record_latency_p95_ms": 107034.0,
+      "records": 16,
+      "second": 222
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1342,
+      "record_latency_p95_ms": 107276.0,
+      "records": 16,
+      "second": 223
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1326,
+      "record_latency_p95_ms": 107564.0,
+      "records": 16,
+      "second": 224
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1310,
+      "record_latency_p95_ms": 107808.0,
+      "records": 16,
+      "second": 225
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1294,
+      "record_latency_p95_ms": 108027.0,
+      "records": 16,
+      "second": 226
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 1278,
+      "record_latency_p95_ms": 108165.0,
+      "records": 18,
+      "second": 227
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 1260,
+      "record_latency_p95_ms": 108277.0,
+      "records": 18,
+      "second": 228
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 1242,
+      "record_latency_p95_ms": 108359.0,
+      "records": 20,
+      "second": 229
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 1222,
+      "record_latency_p95_ms": 108441.0,
+      "records": 20,
+      "second": 230
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 1202,
+      "record_latency_p95_ms": 108602.0,
+      "records": 15,
+      "second": 231
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 1187,
+      "record_latency_p95_ms": 108949.0,
+      "records": 13,
+      "second": 232
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1174,
+      "record_latency_p95_ms": 109248.0,
+      "records": 16,
+      "second": 233
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1158,
+      "record_latency_p95_ms": 109532.0,
+      "records": 16,
+      "second": 234
+    },
+    {
+      "events": 7000,
+      "max_fetch_lag_records": 1142,
+      "record_latency_p95_ms": 109883.0,
+      "records": 14,
+      "second": 235
+    },
+    {
+      "events": 7000,
+      "max_fetch_lag_records": 1128,
+      "record_latency_p95_ms": 110183.0,
+      "records": 14,
+      "second": 236
+    },
+    {
+      "events": 5500,
+      "max_fetch_lag_records": 1114,
+      "record_latency_p95_ms": 110694.0,
+      "records": 11,
+      "second": 237
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 1103,
+      "record_latency_p95_ms": 110945.0,
+      "records": 17,
+      "second": 238
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 1086,
+      "record_latency_p95_ms": 110935.0,
+      "records": 20,
+      "second": 239
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1066,
+      "record_latency_p95_ms": 111145.0,
+      "records": 16,
+      "second": 240
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 1050,
+      "record_latency_p95_ms": 111215.0,
+      "records": 19,
+      "second": 241
+    },
+    {
+      "events": 10500,
+      "max_fetch_lag_records": 1031,
+      "record_latency_p95_ms": 111313.0,
+      "records": 21,
+      "second": 242
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 1010,
+      "record_latency_p95_ms": 111451.0,
+      "records": 16,
+      "second": 243
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 994,
+      "record_latency_p95_ms": 111668.0,
+      "records": 18,
+      "second": 244
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 976,
+      "record_latency_p95_ms": 111698.0,
+      "records": 19,
+      "second": 245
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 957,
+      "record_latency_p95_ms": 111792.0,
+      "records": 19,
+      "second": 246
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 938,
+      "record_latency_p95_ms": 111961.0,
+      "records": 16,
+      "second": 247
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 922,
+      "record_latency_p95_ms": 112240.0,
+      "records": 16,
+      "second": 248
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 906,
+      "record_latency_p95_ms": 112535.0,
+      "records": 16,
+      "second": 249
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 890,
+      "record_latency_p95_ms": 112896.0,
+      "records": 13,
+      "second": 250
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 877,
+      "record_latency_p95_ms": 113142.0,
+      "records": 15,
+      "second": 251
+    },
+    {
+      "events": 5500,
+      "max_fetch_lag_records": 862,
+      "record_latency_p95_ms": 113669.0,
+      "records": 11,
+      "second": 252
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 851,
+      "record_latency_p95_ms": 113940.0,
+      "records": 17,
+      "second": 253
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 834,
+      "record_latency_p95_ms": 113983.0,
+      "records": 16,
+      "second": 254
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 818,
+      "record_latency_p95_ms": 114297.0,
+      "records": 17,
+      "second": 255
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 801,
+      "record_latency_p95_ms": 114383.0,
+      "records": 19,
+      "second": 256
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 782,
+      "record_latency_p95_ms": 114481.0,
+      "records": 20,
+      "second": 257
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 762,
+      "record_latency_p95_ms": 114499.0,
+      "records": 20,
+      "second": 258
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 742,
+      "record_latency_p95_ms": 114685.0,
+      "records": 17,
+      "second": 259
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 725,
+      "record_latency_p95_ms": 114978.0,
+      "records": 15,
+      "second": 260
+    },
+    {
+      "events": 6000,
+      "max_fetch_lag_records": 710,
+      "record_latency_p95_ms": 115311.0,
+      "records": 12,
+      "second": 261
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 698,
+      "record_latency_p95_ms": 115672.0,
+      "records": 15,
+      "second": 262
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 683,
+      "record_latency_p95_ms": 116031.0,
+      "records": 13,
+      "second": 263
+    },
+    {
+      "events": 7000,
+      "max_fetch_lag_records": 670,
+      "record_latency_p95_ms": 116345.0,
+      "records": 14,
+      "second": 264
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 656,
+      "record_latency_p95_ms": 116659.0,
+      "records": 15,
+      "second": 265
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 641,
+      "record_latency_p95_ms": 116869.0,
+      "records": 16,
+      "second": 266
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 625,
+      "record_latency_p95_ms": 117090.0,
+      "records": 15,
+      "second": 267
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 610,
+      "record_latency_p95_ms": 117573.0,
+      "records": 13,
+      "second": 268
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 597,
+      "record_latency_p95_ms": 117809.0,
+      "records": 15,
+      "second": 269
+    },
+    {
+      "events": 6000,
+      "max_fetch_lag_records": 582,
+      "record_latency_p95_ms": 118258.0,
+      "records": 12,
+      "second": 270
+    },
+    {
+      "events": 6000,
+      "max_fetch_lag_records": 570,
+      "record_latency_p95_ms": 118658.0,
+      "records": 12,
+      "second": 271
+    },
+    {
+      "events": 6000,
+      "max_fetch_lag_records": 558,
+      "record_latency_p95_ms": 119069.0,
+      "records": 12,
+      "second": 272
+    },
+    {
+      "events": 7000,
+      "max_fetch_lag_records": 546,
+      "record_latency_p95_ms": 119444.0,
+      "records": 14,
+      "second": 273
+    },
+    {
+      "events": 6000,
+      "max_fetch_lag_records": 532,
+      "record_latency_p95_ms": 119885.0,
+      "records": 12,
+      "second": 274
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 520,
+      "record_latency_p95_ms": 120291.0,
+      "records": 13,
+      "second": 275
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 507,
+      "record_latency_p95_ms": 120626.0,
+      "records": 13,
+      "second": 276
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 494,
+      "record_latency_p95_ms": 120955.0,
+      "records": 13,
+      "second": 277
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 481,
+      "record_latency_p95_ms": 121165.0,
+      "records": 19,
+      "second": 278
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 462,
+      "record_latency_p95_ms": 121214.0,
+      "records": 20,
+      "second": 279
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 442,
+      "record_latency_p95_ms": 121294.0,
+      "records": 20,
+      "second": 280
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 422,
+      "record_latency_p95_ms": 121572.0,
+      "records": 13,
+      "second": 281
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 409,
+      "record_latency_p95_ms": 121788.0,
+      "records": 19,
+      "second": 282
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 390,
+      "record_latency_p95_ms": 121994.0,
+      "records": 16,
+      "second": 283
+    },
+    {
+      "events": 7000,
+      "max_fetch_lag_records": 374,
+      "record_latency_p95_ms": 122281.0,
+      "records": 14,
+      "second": 284
+    },
+    {
+      "events": 5000,
+      "max_fetch_lag_records": 360,
+      "record_latency_p95_ms": 122759.0,
+      "records": 10,
+      "second": 285
+    },
+    {
+      "events": 7500,
+      "max_fetch_lag_records": 350,
+      "record_latency_p95_ms": 123090.0,
+      "records": 15,
+      "second": 286
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 335,
+      "record_latency_p95_ms": 123492.0,
+      "records": 13,
+      "second": 287
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 322,
+      "record_latency_p95_ms": 123726.0,
+      "records": 16,
+      "second": 288
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 306,
+      "record_latency_p95_ms": 123842.0,
+      "records": 18,
+      "second": 289
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 288,
+      "record_latency_p95_ms": 124078.0,
+      "records": 16,
+      "second": 290
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 272,
+      "record_latency_p95_ms": 124233.0,
+      "records": 18,
+      "second": 291
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 254,
+      "record_latency_p95_ms": 124273.0,
+      "records": 20,
+      "second": 292
+    },
+    {
+      "events": 9500,
+      "max_fetch_lag_records": 234,
+      "record_latency_p95_ms": 124431.0,
+      "records": 19,
+      "second": 293
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 215,
+      "record_latency_p95_ms": 124516.0,
+      "records": 18,
+      "second": 294
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 197,
+      "record_latency_p95_ms": 124576.0,
+      "records": 20,
+      "second": 295
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 177,
+      "record_latency_p95_ms": 124781.0,
+      "records": 16,
+      "second": 296
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 161,
+      "record_latency_p95_ms": 124974.0,
+      "records": 17,
+      "second": 297
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 144,
+      "record_latency_p95_ms": 125174.0,
+      "records": 18,
+      "second": 298
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 126,
+      "record_latency_p95_ms": 125372.0,
+      "records": 16,
+      "second": 299
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 110,
+      "record_latency_p95_ms": 125593.0,
+      "records": 16,
+      "second": 300
+    },
+    {
+      "events": 8000,
+      "max_fetch_lag_records": 94,
+      "record_latency_p95_ms": 125780.0,
+      "records": 16,
+      "second": 301
+    },
+    {
+      "events": 6500,
+      "max_fetch_lag_records": 78,
+      "record_latency_p95_ms": 126179.0,
+      "records": 13,
+      "second": 302
+    },
+    {
+      "events": 8500,
+      "max_fetch_lag_records": 65,
+      "record_latency_p95_ms": 126449.0,
+      "records": 17,
+      "second": 303
+    },
+    {
+      "events": 9000,
+      "max_fetch_lag_records": 48,
+      "record_latency_p95_ms": 126554.0,
+      "records": 18,
+      "second": 304
+    },
+    {
+      "events": 10000,
+      "max_fetch_lag_records": 30,
+      "record_latency_p95_ms": 126629.0,
+      "records": 20,
+      "second": 305
+    },
+    {
+      "events": 5500,
+      "max_fetch_lag_records": 10,
+      "record_latency_p95_ms": 126628.0,
+      "records": 11,
+      "second": 306
+    }
+  ],
+  "unique_source_events": 3300000,
+  "validated": true
+}

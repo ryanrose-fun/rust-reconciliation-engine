@@ -24,6 +24,7 @@ mime = "0.3"
 rusqlite = { version = "0.41", features = ["bundled"] }
 
 tower = { version = "0.5", features = ["util"] }
+rskafka = { version = "0.6", default-features = false, optional = true }
 
 [dev-dependencies]
 jsonschema = { version = "0.33", default-features = false }
@@ -31,6 +32,7 @@ jsonschema = { version = "0.33", default-features = false }
 [features]
 client = ["dep:reqwest"]
 gpu = ["dep:gpu-compute", "dep:fs2"]
+streaming = ["dep:rskafka", "client", "dep:fs2"]
 
 [dependencies.gpu-compute]
 package = "rust-gpu-finance-compute"
@@ -64,3 +66,8 @@ required-features=["client"]
 [[example]]
 name = "partitioned_integration"
 required-features = ["client"]
+
+[[bin]]
+name = "payment-stream"
+path = "src/bin/payment-stream/main.rs"
+required-features = ["streaming"]
